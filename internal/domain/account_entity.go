@@ -6,20 +6,20 @@ import (
 )
 
 type Account struct {
-	Id        string
-	Name      string
-	LastName  string
-	fullName  string
-	Email     string
-	Phone     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Active    bool
-	HashedPwd string
+	Id        string    `json:"id"`
+	Name      string    `json:"name"`
+	LastName  string    `json:"lastName"`
+	FullName  string    `json:"fullName"`
+	Email     string    `json:"email"`
+	Phone     string    `json:"phone"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	Active    bool      `json:"active"`
+	HashedPwd string    `json:"-"`
 }
 
 func (account Account) ToDomain() Account {
-	account.fullName = fmt.Sprintf("%s %s", account.Name, account.LastName)
+	account.FullName = fmt.Sprintf("%s %s", account.Name, account.LastName)
 	account.HashedPwd = ""
 
 	return account

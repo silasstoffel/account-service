@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/silasstoffel/account-service/internal/domain"
@@ -20,11 +21,17 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (domain
 		LastName:  input.LastName,
 		Email:     input.Email,
 		Phone:     input.Phone,
-		HashedPwd: input.HashedPwd,
+		HashedPwd: input.Password,
 		Active:    true,
+		FullName:  fmt.Sprintf("%s %s", input.Name, input.LastName),
 	}
 
-	createdAccount, _ := ref.AccountRepository.Create(account)
+	createdAccount, err := ref.AccountRepository.Create(account)
+
+	if err != nil {
+		return createdAccount, err
+	}
+
 	log.Println(loggerPrefix, "Account created", "id:", createdAccount.Id)
 
 	return createdAccount.ToDomain(), nil
