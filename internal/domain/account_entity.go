@@ -24,3 +24,14 @@ func (account Account) ToDomain() Account {
 
 	return account
 }
+
+func (account *Account) IsEmpty() bool {
+	return account.Id == ""
+}
+
+// Error codes
+const (
+	AccountEmailAlreadyExists = "ACCOUNT_EMAIL_ALREADY_EXISTS"
+	AccountPhoneAlreadyExists = "ACCOUNT_PHONE_ALREADY_EXISTS"
+	AccountNotFound           = "ACCOUNT_NOT_FOUND"
+)

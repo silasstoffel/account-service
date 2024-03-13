@@ -16,6 +16,16 @@ type CreateAccount struct {
 func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (domain.Account, error) {
 	log.Println(loggerPrefix, "Creating account...")
 
+	_, err := ref.AccountRepository.FindByEmail(input.Email)
+	if err != nil {
+		return domain.Account{}, domain.NewError(domain.AccountEmailAlreadyExists, "Email already registered", err)
+	}
+
+	_, err = ref.AccountRepository.FindByPhone(input.Phone)
+	if err != nil {
+		return domain.Account{}, domain.NewError(domain.AccountPhoneAlreadyExists, "Phone already registered", err)
+	}
+
 	account := domain.Account{
 		Name:      input.Name,
 		LastName:  input.LastName,
@@ -29,7 +39,7 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (domain
 	createdAccount, err := ref.AccountRepository.Create(account)
 
 	if err != nil {
-		return createdAccount, err
+		return domain.Account{}, err
 	}
 
 	log.Println(loggerPrefix, "Account created", "id:", createdAccount.Id)

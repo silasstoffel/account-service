@@ -2,6 +2,7 @@ package v1handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/silasstoffel/account-service/internal/domain"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 )
@@ -22,36 +23,36 @@ func GetAccountHandler(router *gin.RouterGroup) {
 
 func list() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		createAccount := usecase.CreateAccount{
-			AccountRepository: accountRepository,
-		}
-
-		input := usecase.CreateAccountInput{
-			Name:     "Silas",
-			LastName: "Stoffel",
-			Email:    "email@email.com",
-			Phone:    "+55996354103",
-			Password: "123456",
-		}
-
-		createdAccount, err := createAccount.CreateAccountUseCase(input)
+		listAccount := usecase.ListAccount{AccountRepository: accountRepository}
+		input := domain.ListAccountInput{Page: 1, Limit: 12}
+		accounts, err := listAccount.ListAccountUseCase(input)
 
 		if err != nil {
-			c.JSON(500, gin.H{"message": "internal server error", "error": err})
+			c.JSON(500, gin.H{"code": domain.UnknownError, "message": "Unknown error has happened"})
 			return
 		}
-
-		c.JSON(200, gin.H{
-			"data": createdAccount,
-		})
+		c.JSON(200, accounts)
 	}
 }
 
 func get() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "get account",
-		})
+		id := c.Param("id")
+		findAccount := usecase.FindAccount{AccountRepository: accountRepository}
+		account, err := findAccount.FindAccountUseCase(id)
+
+		if err != nil {
+			detail := err.(*domain.Error)
+
+			if detail.Code == domain.AccountNotFound {
+				c.JSON(404, detail.ToDomain())
+				return
+			}
+
+			c.JSON(500, gin.H{"code": domain.UnknownError, "message": "Unknown error has happened"})
+			return
+		}
+		c.JSON(200, account)
 	}
 }
 
