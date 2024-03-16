@@ -6,7 +6,16 @@ import (
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 	errorDomain "github.com/silasstoffel/account-service/internal/domain/exception"
+	"github.com/silasstoffel/account-service/internal/service"
 )
+
+type CreateAccountInput struct {
+	Name     string
+	LastName string
+	Email    string
+	Phone    string
+	Password string
+}
 
 type CreateAccount struct {
 	AccountRepository accountDomain.AccountRepository
@@ -52,12 +61,17 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 		return accountDomain.Account{}, err
 	}
 
+	pwd, err := service.CreateHash(input.Password)
+	if err != nil {
+		return accountDomain.Account{}, err
+	}
+
 	account := accountDomain.Account{
 		Name:      input.Name,
 		LastName:  input.LastName,
 		Email:     input.Email,
 		Phone:     input.Phone,
-		HashedPwd: input.Password,
+		HashedPwd: pwd,
 		Active:    true,
 		FullName:  fmt.Sprintf("%s %s", input.Name, input.LastName),
 	}

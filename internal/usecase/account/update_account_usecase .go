@@ -5,6 +5,7 @@ import (
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 	errorDomain "github.com/silasstoffel/account-service/internal/domain/exception"
+	"github.com/silasstoffel/account-service/internal/service"
 )
 
 type UpdateAccountInput struct {
@@ -58,12 +59,21 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 		return accountDomain.Account{}, err
 	}
 
+	var pwd string
+	if input.Password != "" {
+		var err error
+		pwd, err = service.CreateHash(input.Password)
+		if err != nil {
+			return accountDomain.Account{}, err
+		}
+	}
+
 	account := accountDomain.Account{
 		Name:      input.Name,
 		LastName:  input.LastName,
 		Email:     input.Email,
 		Phone:     input.Phone,
-		HashedPwd: input.Password,
+		HashedPwd: pwd,
 	}
 	account.BuildFullName()
 	updatedAccount, err := ref.AccountRepository.Update(id, account)

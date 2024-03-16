@@ -204,7 +204,7 @@ func (repository *AccountRepository) Update(id string, data accountDomain.Accoun
 	}
 
 	if data.HashedPwd != "" {
-		updateFields = append(updateFields, "hashed_pwd = $"+string(argCount))
+		updateFields = append(updateFields, "hashed_pwd = $"+strconv.Itoa(argCount))
 		args = append(args, data.HashedPwd)
 		argCount++
 		account.HashedPwd = data.HashedPwd
