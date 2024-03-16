@@ -24,28 +24,32 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 	var account accountDomain.Account
 	var err error
 
-	account, err = ref.AccountRepository.FindByEmail(input.Email)
-	if err != nil {
-		detail := err.(*errorDomain.Error)
-		if detail.Code != accountDomain.AccountNotFound {
-			return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+	if input.Email != "" {
+		account, err = ref.AccountRepository.FindByEmail(input.Email)
+		if err != nil {
+			detail := err.(*errorDomain.Error)
+			if detail.Code != accountDomain.AccountNotFound {
+				return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+			}
+		}
+
+		if !account.IsEmpty() && account.Id != accountId {
+			return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Email already registered", err)
 		}
 	}
 
-	if !account.IsEmpty() && account.Id != accountId {
-		return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Email already registered", err)
-	}
-
-	account, err = ref.AccountRepository.FindByPhone(input.Phone)
-	if err != nil {
-		detail := err.(*errorDomain.Error)
-		if detail.Code != accountDomain.AccountNotFound {
-			return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+	if input.Phone != "" {
+		account, err = ref.AccountRepository.FindByPhone(input.Phone)
+		if err != nil {
+			detail := err.(*errorDomain.Error)
+			if detail.Code != accountDomain.AccountNotFound {
+				return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+			}
 		}
-	}
 
-	if !account.IsEmpty() && account.Id != accountId {
-		return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err)
+		if !account.IsEmpty() && account.Id != accountId {
+			return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err)
+		}
 	}
 
 	return nil
