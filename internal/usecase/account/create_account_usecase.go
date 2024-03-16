@@ -4,29 +4,55 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/silasstoffel/account-service/internal/domain"
+	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
+	errorDomain "github.com/silasstoffel/account-service/internal/domain/exception"
 )
 
-const loggerPrefix = "[create-account-usecase]"
-
 type CreateAccount struct {
-	AccountRepository domain.AccountRepository
+	AccountRepository accountDomain.AccountRepository
 }
 
-func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (domain.Account, error) {
+func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
+	var account accountDomain.Account
+	var err error
+
+	account, err = ref.AccountRepository.FindByEmail(input.Email)
+	if err != nil {
+		detail := err.(*errorDomain.Error)
+		if detail.Code != accountDomain.AccountNotFound {
+			return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+		}
+	}
+
+	if !account.IsEmpty() {
+		return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Email already registered", err)
+	}
+
+	account, err = ref.AccountRepository.FindByPhone(input.Phone)
+	if err != nil {
+		detail := err.(*errorDomain.Error)
+		if detail.Code != accountDomain.AccountNotFound {
+			return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+		}
+		return errorDomain.NewError(accountDomain.AccountPhoneAlreadyExists, "Phone already registered", err)
+	}
+
+	if !account.IsEmpty() {
+		return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err)
+	}
+
+	return nil
+}
+
+func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accountDomain.Account, error) {
+	const loggerPrefix = "[create-account-usecase]"
 	log.Println(loggerPrefix, "Creating account...")
 
-	_, err := ref.AccountRepository.FindByEmail(input.Email)
-	if err != nil {
-		return domain.Account{}, domain.NewError(domain.AccountEmailAlreadyExists, "Email already registered", err)
+	if err := ref.checkInput(input); err != nil {
+		return accountDomain.Account{}, err
 	}
 
-	_, err = ref.AccountRepository.FindByPhone(input.Phone)
-	if err != nil {
-		return domain.Account{}, domain.NewError(domain.AccountPhoneAlreadyExists, "Phone already registered", err)
-	}
-
-	account := domain.Account{
+	account := accountDomain.Account{
 		Name:      input.Name,
 		LastName:  input.LastName,
 		Email:     input.Email,
@@ -39,7 +65,7 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (domain
 	createdAccount, err := ref.AccountRepository.Create(account)
 
 	if err != nil {
-		return domain.Account{}, err
+		return accountDomain.Account{}, err
 	}
 
 	log.Println(loggerPrefix, "Account created", "id:", createdAccount.Id)

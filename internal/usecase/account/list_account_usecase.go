@@ -3,7 +3,7 @@ package usecase
 import (
 	"log"
 
-	"github.com/silasstoffel/account-service/internal/domain"
+	domain "github.com/silasstoffel/account-service/internal/domain/account"
 )
 
 const listLoggerPrefix = "[list-account-usecase]"

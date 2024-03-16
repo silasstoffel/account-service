@@ -2,7 +2,8 @@ package v1handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/silasstoffel/account-service/internal/domain"
+	domain "github.com/silasstoffel/account-service/internal/domain/account"
+	errorDomain "github.com/silasstoffel/account-service/internal/domain/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 )
@@ -28,7 +29,7 @@ func list() gin.HandlerFunc {
 		accounts, err := listAccount.ListAccountUseCase(input)
 
 		if err != nil {
-			c.JSON(500, gin.H{"code": domain.UnknownError, "message": "Unknown error has happened"})
+			c.JSON(500, gin.H{"code": errorDomain.UnknownError, "message": "Unknown error has happened"})
 			return
 		}
 		c.JSON(200, accounts)
@@ -42,14 +43,14 @@ func get() gin.HandlerFunc {
 		account, err := findAccount.FindAccountUseCase(id)
 
 		if err != nil {
-			detail := err.(*domain.Error)
+			detail := err.(*errorDomain.Error)
 
 			if detail.Code == domain.AccountNotFound {
 				c.JSON(404, detail.ToDomain())
 				return
 			}
 
-			c.JSON(500, gin.H{"code": domain.UnknownError, "message": "Unknown error has happened"})
+			c.JSON(500, gin.H{"code": errorDomain.UnknownError, "message": "Unknown error has happened"})
 			return
 		}
 		c.JSON(200, account)
@@ -58,9 +59,22 @@ func get() gin.HandlerFunc {
 
 func create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "get account",
-		})
+		createAccount := usecase.CreateAccount{AccountRepository: accountRepository}
+		var input usecase.CreateAccountInput
+
+		if err := c.BindJSON(&input); err != nil {
+			c.JSON(400, gin.H{"code": "INVALID_INPUT_FORMAT", "message": "Invalid input format"})
+			return
+		}
+
+		account, err := createAccount.CreateAccountUseCase(input)
+		if err != nil {
+			detail := err.(*errorDomain.Error)
+			c.JSON(400, detail.ToDomain())
+			return
+		}
+
+		c.JSON(201, account)
 	}
 }
 

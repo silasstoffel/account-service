@@ -3,14 +3,14 @@ package usecase
 import (
 	"log"
 
-	"github.com/silasstoffel/account-service/internal/domain"
+	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 )
 
 type FindAccount struct {
-	AccountRepository domain.AccountRepository
+	AccountRepository accountDomain.AccountRepository
 }
 
-func (ref *FindAccount) FindAccountUseCase(id string) (domain.Account, error) {
+func (ref *FindAccount) FindAccountUseCase(id string) (accountDomain.Account, error) {
 	const prefix = "[find-account-usecase]"
 	log.Println(prefix, "finding account", id)
 
@@ -18,7 +18,7 @@ func (ref *FindAccount) FindAccountUseCase(id string) (domain.Account, error) {
 
 	if err != nil {
 		log.Println(prefix, "An error happens when find account", id)
-		return domain.Account{}, err
+		return accountDomain.Account{}, err
 	}
 
 	log.Println(prefix, "found account", id)
