@@ -4,6 +4,7 @@ import (
 	"log"
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
+	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/service"
 )
@@ -18,6 +19,7 @@ type UpdateAccountInput struct {
 
 type UpdateAccount struct {
 	AccountRepository accountDomain.AccountRepository
+	Messaging         event.EventService
 }
 
 func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string) error {
@@ -86,7 +88,9 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 		return accountDomain.Account{}, err
 	}
 
+	data := updatedAccount.ToDomain()
+	go ref.Messaging.Publish(event.AccountUpdated, data, "account-service")
 	log.Println(loggerPrefix, "Account updated", "id:", id)
 
-	return updatedAccount.ToDomain(), nil
+	return data, nil
 }

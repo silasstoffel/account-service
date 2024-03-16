@@ -5,14 +5,17 @@ import (
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
+	"github.com/silasstoffel/account-service/internal/infra/messaging"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 )
 
 var accountRepository *database.AccountRepository
+var messagingService *messaging.MessagingService
 
 func GetAccountHandler(router *gin.RouterGroup) {
 	cnx := database.OpenConnection()
 	accountRepository = database.NewAccountRepository(cnx)
+	messagingService = messaging.NewMessagingService()
 
 	group := router.Group("/accounts")
 	group.GET("/", list())
@@ -60,7 +63,10 @@ func get() gin.HandlerFunc {
 
 func create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		createAccount := usecase.CreateAccount{AccountRepository: accountRepository}
+		createAccount := usecase.CreateAccount{
+			AccountRepository: accountRepository,
+			Messaging:         messagingService,
+		}
 		var input usecase.CreateAccountInput
 
 		if err := c.BindJSON(&input); err != nil {
@@ -81,7 +87,10 @@ func create() gin.HandlerFunc {
 
 func update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		updateAccountInstance := usecase.UpdateAccount{AccountRepository: accountRepository}
+		updateAccountInstance := usecase.UpdateAccount{
+			AccountRepository: accountRepository,
+			Messaging:         messagingService,
+		}
 		var input usecase.UpdateAccountInput
 
 		if err := c.BindJSON(&input); err != nil {

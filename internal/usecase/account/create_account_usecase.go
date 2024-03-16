@@ -5,6 +5,7 @@ import (
 	"log"
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
+	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/service"
 )
@@ -19,6 +20,7 @@ type CreateAccountInput struct {
 
 type CreateAccount struct {
 	AccountRepository accountDomain.AccountRepository
+	Messaging         event.EventService
 }
 
 func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
@@ -83,6 +85,9 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 	}
 
 	log.Println(loggerPrefix, "Account created", "id:", createdAccount.Id)
+	data := createdAccount.ToDomain()
 
-	return createdAccount.ToDomain(), nil
+	go ref.Messaging.Publish(event.AccountCreated, data, "account-service")
+
+	return data, nil
 }
