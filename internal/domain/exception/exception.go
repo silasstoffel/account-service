@@ -1,5 +1,10 @@
 package domain
 
+const (
+	UnknownError   = "UNKNOWN_ERROR"
+	DbCommandError = "DATABASE_ERROR"
+)
+
 type Error struct {
 	Code          string `json:"code"`
 	Message       string `json:"message"`
