@@ -10,7 +10,7 @@ import (
 	"time"
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
-	errorDomain "github.com/silasstoffel/account-service/internal/domain/exception"
+	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 )
 
@@ -52,7 +52,7 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 	)
 
 	if err != nil {
-		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when creating account", err)
+		return account, exception.New(exception.DbCommandError, "Error when creating account", err, exception.HttpInternalError)
 	}
 
 	log.Println(loggerPrefix, "Account created with id", account.Id)
@@ -72,9 +72,9 @@ func (repository *AccountRepository) FindByEmail(email string) (accountDomain.Ac
 	if err != nil {
 		log.Println(loggerPrefix, "Error find account by email. Detail", err.Error())
 		if err == sql.ErrNoRows {
-			return account, errorDomain.NewError(accountDomain.AccountNotFound, "Account not found", nil)
+			return account, exception.New(accountDomain.AccountNotFound, "Account not found", nil, exception.HttpNotFoundError)
 		}
-		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when finding account by e-mail", err)
+		return account, exception.New(exception.DbCommandError, "Error when finding account by e-mail", err, exception.HttpInternalError)
 	}
 
 	log.Println(loggerPrefix, "Account found with id", account.Id)
@@ -95,9 +95,9 @@ func (repository *AccountRepository) FindByPhone(phone string) (accountDomain.Ac
 		log.Println(loggerPrefix, "Error find account by phone. Detail", err.Error())
 		if err == sql.ErrNoRows {
 			log.Println(loggerPrefix, "There is no row to return")
-			return account, errorDomain.NewError(accountDomain.AccountNotFound, "Account not found", nil)
+			return account, exception.New(accountDomain.AccountNotFound, "Account not found", nil, exception.HttpNotFoundError)
 		}
-		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when finding account by e-mail", err)
+		return account, exception.New(exception.DbCommandError, "Error when finding account by e-mail", err, exception.HttpInternalError)
 	}
 
 	log.Println(loggerPrefix, "Account found with id", account.Id)
@@ -124,7 +124,7 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 	var accounts []accountDomain.Account
 	if err != nil {
 		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
-		return accounts, errorDomain.NewError(errorDomain.DbCommandError, "Error when listing accounts", err)
+		return accounts, exception.New(exception.DbCommandError, "Error when listing accounts", err, exception.HttpInternalError)
 	}
 
 	defer rows.Close()
@@ -132,7 +132,7 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 		var account accountDomain.Account
 		if err := scanRow(rows, &account); err != nil {
 			log.Println(loggerPrefix, "error when scan result", err.Error())
-			return accounts, errorDomain.NewError(errorDomain.DbCommandError, "Error when listing accounts", err)
+			return accounts, exception.New(exception.DbCommandError, "Error when listing accounts", err, exception.HttpInternalError)
 		}
 		accounts = append(accounts, account)
 	}
@@ -154,9 +154,9 @@ func (repository *AccountRepository) FindById(accountId string) (accountDomain.A
 	if err := scanRow(row, &account); err != nil {
 		log.Println(loggerPrefix, "Error when finding account by id.", err.Error())
 		if err == sql.ErrNoRows {
-			return account, errorDomain.NewError(accountDomain.AccountNotFound, "Account not found", nil)
+			return account, exception.New(accountDomain.AccountNotFound, "Account not found", nil, exception.HttpNotFoundError)
 		}
-		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when finding account by id.", err)
+		return account, exception.New(exception.DbCommandError, "Error when finding account by id.", err, exception.HttpInternalError)
 	}
 
 	log.Println(loggerPrefix, "Account found", account.Id)
@@ -224,7 +224,7 @@ func (repository *AccountRepository) Update(id string, data accountDomain.Accoun
 	_, err = repository.Db.Exec(query, args...)
 	if err != nil {
 		log.Println(loggerPrefix, "Error when updating account", id, err.Error())
-		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when updating account", err)
+		return account, exception.New(exception.DbCommandError, "Error when updating account", err, exception.HttpInternalError)
 	}
 
 	log.Println(loggerPrefix, "Account updated", id)
@@ -260,5 +260,10 @@ func scanRow(row interface{}, account *accountDomain.Account) error {
 			&account.HashedPwd,
 		)
 	}
-	return errorDomain.NewError(errorDomain.UnknownError, "An Unknown error happens", errors.New("ScanRow error is not sql.Row or sql.Rows"))
+	return exception.New(
+		exception.UnknownError,
+		"An Unknown error happens",
+		errors.New("ScanRow error is not sql.Row or sql.Rows"),
+		exception.HttpInternalError,
+	)
 }

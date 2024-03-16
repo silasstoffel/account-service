@@ -4,7 +4,7 @@ import (
 	"log"
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
-	errorDomain "github.com/silasstoffel/account-service/internal/domain/exception"
+	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/service"
 )
 
@@ -27,28 +27,28 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 	if input.Email != "" {
 		account, err = ref.AccountRepository.FindByEmail(input.Email)
 		if err != nil {
-			detail := err.(*errorDomain.Error)
+			detail := err.(*exception.Exception)
 			if detail.Code != accountDomain.AccountNotFound {
-				return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+				return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
 			}
 		}
 
 		if !account.IsEmpty() && account.Id != accountId {
-			return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Email already registered", err)
+			return exception.New(accountDomain.AccountEmailAlreadyExists, "Email already registered", err, exception.HttpClientError)
 		}
 	}
 
 	if input.Phone != "" {
 		account, err = ref.AccountRepository.FindByPhone(input.Phone)
 		if err != nil {
-			detail := err.(*errorDomain.Error)
+			detail := err.(*exception.Exception)
 			if detail.Code != accountDomain.AccountNotFound {
-				return errorDomain.NewError(errorDomain.UnknownError, "Unknown error has happened", err)
+				return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
 			}
 		}
 
 		if !account.IsEmpty() && account.Id != accountId {
-			return errorDomain.NewError(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err)
+			return exception.New(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err, exception.HttpClientError)
 		}
 	}
 
