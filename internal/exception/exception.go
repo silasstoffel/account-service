@@ -12,7 +12,7 @@ type Exception struct {
 	Code           string `json:"code"`
 	Message        string `json:"message"`
 	OriginalError  error  `json:"-"`
-	httpStatusCode int    `json:"-"`
+	HttpStatusCode int    `json:"-"`
 }
 
 type ShortException struct {
@@ -29,7 +29,7 @@ func New(code string, message string, originalError error, httpStatus int) *Exce
 		Code:           code,
 		Message:        message,
 		OriginalError:  originalError,
-		httpStatusCode: status,
+		HttpStatusCode: status,
 	}
 }
 

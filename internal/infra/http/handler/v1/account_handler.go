@@ -44,13 +44,14 @@ func get() gin.HandlerFunc {
 
 		if err != nil {
 			detail := err.(*exception.Exception)
+			status := detail.HttpStatusCode
 
-			if detail.Code == domain.AccountNotFound {
-				c.JSON(404, detail.ToDomain())
+			if status < 500 {
+				c.JSON(status, detail.ToDomain())
 				return
 			}
 
-			c.JSON(500, gin.H{"code": exception.UnknownError, "message": "Unknown error has happened"})
+			c.JSON(detail.HttpStatusCode, gin.H{"code": exception.UnknownError, "message": "Unknown error has happened"})
 			return
 		}
 		c.JSON(200, account)
@@ -91,7 +92,7 @@ func update() gin.HandlerFunc {
 		account, err := updateAccountInstance.UpdateAccountUseCase(c.Param("id"), input)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			c.JSON(400, detail.ToDomain())
+			c.JSON(detail.HttpStatusCode, detail.ToDomain())
 			return
 		}
 
