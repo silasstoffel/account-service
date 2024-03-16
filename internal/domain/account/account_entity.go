@@ -19,7 +19,7 @@ type Account struct {
 }
 
 func (account Account) ToDomain() Account {
-	account.FullName = fmt.Sprintf("%s %s", account.Name, account.LastName)
+	(account).BuildFullName()
 	account.HashedPwd = ""
 
 	return account
@@ -27,6 +27,12 @@ func (account Account) ToDomain() Account {
 
 func (account *Account) IsEmpty() bool {
 	return account.Id == ""
+}
+
+func (account *Account) BuildFullName() {
+	if (account.Name != "" && account.LastName != "") && account.FullName == "" {
+		account.FullName = fmt.Sprintf("%s %s", account.Name, account.LastName)
+	}
 }
 
 // Error codes

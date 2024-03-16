@@ -80,8 +80,21 @@ func create() gin.HandlerFunc {
 
 func update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "get account",
-		})
+		updateAccountInstance := usecase.UpdateAccount{AccountRepository: accountRepository}
+		var input usecase.UpdateAccountInput
+
+		if err := c.BindJSON(&input); err != nil {
+			c.JSON(400, gin.H{"code": "INVALID_INPUT_FORMAT", "message": "Invalid input format"})
+			return
+		}
+
+		account, err := updateAccountInstance.UpdateAccountUseCase(c.Param("id"), input)
+		if err != nil {
+			detail := err.(*errorDomain.Error)
+			c.JSON(400, detail.ToDomain())
+			return
+		}
+
+		c.JSON(200, account)
 	}
 }

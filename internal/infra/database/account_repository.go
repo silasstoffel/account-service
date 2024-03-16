@@ -3,7 +3,10 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
@@ -34,7 +37,7 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 	stmt := `INSERT INTO accounts (id, name, last_name, email, phone, created_at, updated_at, active, full_name, hashed_pwd)
 	         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
-	result, err := repository.Db.Exec(
+	_, err := repository.Db.Exec(
 		stmt,
 		account.Id,
 		account.Name,
@@ -51,8 +54,7 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 	if err != nil {
 		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when creating account", err)
 	}
-	affected, _ := result.RowsAffected()
-	log.Println(loggerPrefix, "Affected row", affected)
+
 	log.Println(loggerPrefix, "Account created with id", account.Id)
 	return account, nil
 }
@@ -132,7 +134,6 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 			log.Println(loggerPrefix, "error when scan result", err.Error())
 			return accounts, errorDomain.NewError(errorDomain.DbCommandError, "Error when listing accounts", err)
 		}
-		log.Println(loggerPrefix, "account", account)
 		accounts = append(accounts, account)
 	}
 
@@ -159,6 +160,74 @@ func (repository *AccountRepository) FindById(accountId string) (accountDomain.A
 	}
 
 	log.Println(loggerPrefix, "Account found", account.Id)
+	return account, nil
+}
+
+func (repository *AccountRepository) Update(id string, data accountDomain.Account) (accountDomain.Account, error) {
+	log.Println(loggerPrefix, "Finding account", id)
+	account, err := (repository).FindById(id)
+	if err != nil {
+		log.Println(loggerPrefix, "Error when finding account", id, "Detail", err.Error())
+		return account, err
+	}
+
+	var args []interface{}
+	var updateFields []string
+	argCount := 1
+
+	if data.Name != "" {
+		updateFields = append(updateFields, "name = $"+strconv.Itoa(argCount))
+		args = append(args, data.Name)
+		argCount++
+		account.Name = data.Name
+	}
+
+	if data.LastName != "" {
+		updateFields = append(updateFields, "last_name = $"+strconv.Itoa(argCount))
+		args = append(args, data.LastName)
+		argCount++
+		account.LastName = data.LastName
+	}
+
+	if data.Email != "" {
+		updateFields = append(updateFields, "email = $"+strconv.Itoa(argCount))
+		args = append(args, data.Email)
+		argCount++
+		account.Email = data.Email
+	}
+
+	if data.Phone != "" {
+		updateFields = append(updateFields, "phone = $"+strconv.Itoa(argCount))
+		args = append(args, data.Phone)
+		argCount++
+		account.Phone = data.Phone
+	}
+
+	if data.HashedPwd != "" {
+		updateFields = append(updateFields, "hashed_pwd = $"+string(argCount))
+		args = append(args, data.HashedPwd)
+		argCount++
+		account.HashedPwd = data.HashedPwd
+	}
+
+	updateFields = append(updateFields, "updated_at = $"+strconv.Itoa(argCount))
+	now := time.Now().UTC()
+	args = append(args, now)
+	argCount++
+
+	args = append(args, id)
+	cols := strings.Join(updateFields, ", ")
+	query := fmt.Sprintf("UPDATE accounts SET %s WHERE id = $%s", cols, strconv.Itoa(argCount))
+	account.UpdatedAt = now
+
+	log.Println(loggerPrefix, "Updating account", id, "query:", query)
+	_, err = repository.Db.Exec(query, args...)
+	if err != nil {
+		log.Println(loggerPrefix, "Error when updating account", id, err.Error())
+		return account, errorDomain.NewError(errorDomain.DbCommandError, "Error when updating account", err)
+	}
+
+	log.Println(loggerPrefix, "Account updated", id)
 	return account, nil
 }
 

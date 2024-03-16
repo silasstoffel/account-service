@@ -11,4 +11,5 @@ type AccountRepository interface {
 	Create(account Account) (Account, error)
 	FindByEmail(email string) (Account, error)
 	FindByPhone(phone string) (Account, error)
+	Update(id string, data Account) (Account, error)
 }
