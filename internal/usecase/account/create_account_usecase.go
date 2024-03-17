@@ -45,7 +45,6 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 		if detail.Code != accountDomain.AccountNotFound {
 			return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
 		}
-		return exception.New(accountDomain.AccountPhoneAlreadyExists, "Phone already registered", err, exception.HttpClientError)
 	}
 
 	if !account.IsEmpty() {

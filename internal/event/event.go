@@ -13,6 +13,7 @@ const (
 const (
 	ErrorPublishingEvent      = "ERROR_PUBLISHING_EVENT"
 	ErrorConvertMessageToJson = "ERROR_CONVERT_MESSAGE_TO_JSON"
+	ErrorInstanceEventBus     = "ERROR_INSTANCE_EVENT_BUS"
 )
 
 type Event struct {

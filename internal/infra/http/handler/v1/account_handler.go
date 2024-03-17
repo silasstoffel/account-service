@@ -15,7 +15,10 @@ var messagingService *messaging.MessagingService
 func GetAccountHandler(router *gin.RouterGroup) {
 	cnx := database.OpenConnection()
 	accountRepository = database.NewAccountRepository(cnx)
-	messagingService = messaging.NewMessagingService()
+	messagingService = messaging.NewMessagingService(
+		"arn:aws:sns:us-east-1:000000000000:account-service-topic",
+		"http://localhost:4566",
+	)
 
 	group := router.Group("/accounts")
 	group.GET("/", list())
