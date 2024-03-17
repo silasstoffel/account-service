@@ -16,3 +16,21 @@ services:
             - ./scripts/database:/docker-entrypoint-initdb.d/
         networks:
             - default
+
+    localstack:
+        container_name: 'account-service-localstack'
+        image: localstack/localstack
+        ports:
+            - '4566:4566'            # LocalStack Gateway
+            - '4510-4559:4510-4559'  # external services port range
+        environment:
+            # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+            - DEBUG=1
+            - SERVICES=sns,sqs
+            - DEFAULT_REGION=us-east-1
+        volumes:
+            - ./.docker/localstack:/var/lib/localstack
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./scripts/localstack/aws-resources.sh:/etc/localstack/init/ready.d/script.sh
+        networks:
+            - default            
