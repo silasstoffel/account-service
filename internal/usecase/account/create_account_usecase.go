@@ -20,7 +20,7 @@ type CreateAccountInput struct {
 
 type CreateAccount struct {
 	AccountRepository accountDomain.AccountRepository
-	Messaging         event.EventService
+	Messaging         event.EventProducer
 }
 
 func (ref *CreateAccount) checkInput(input CreateAccountInput) error {

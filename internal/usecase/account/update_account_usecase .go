@@ -19,7 +19,7 @@ type UpdateAccountInput struct {
 
 type UpdateAccount struct {
 	AccountRepository accountDomain.AccountRepository
-	Messaging         event.EventService
+	Messaging         event.EventProducer
 }
 
 func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string) error {

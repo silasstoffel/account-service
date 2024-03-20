@@ -24,6 +24,6 @@ type Event struct {
 	Data       string    `json:"data"`
 }
 
-type EventService interface {
+type EventProducer interface {
 	Publish(eventType string, data interface{}, source string) error
 }
