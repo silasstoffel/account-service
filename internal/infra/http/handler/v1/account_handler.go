@@ -10,12 +10,12 @@ import (
 )
 
 var accountRepository *database.AccountRepository
-var messagingService *messaging.MessagingService
+var messagingProducer *messaging.MessagingProducer
 
 func GetAccountHandler(router *gin.RouterGroup) {
 	cnx := database.OpenConnection()
 	accountRepository = database.NewAccountRepository(cnx)
-	messagingService = messaging.NewMessagingService(
+	messagingProducer = messaging.NewMessagingProducer(
 		"arn:aws:sns:us-east-1:000000000000:account-service-topic",
 		"http://localhost:4566",
 	)
@@ -68,7 +68,7 @@ func create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		createAccount := usecase.CreateAccount{
 			AccountRepository: accountRepository,
-			Messaging:         messagingService,
+			Messaging:         messagingProducer,
 		}
 		var input usecase.CreateAccountInput
 
@@ -92,7 +92,7 @@ func update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		updateAccountInstance := usecase.UpdateAccount{
 			AccountRepository: accountRepository,
-			Messaging:         messagingService,
+			Messaging:         messagingProducer,
 		}
 		var input usecase.UpdateAccountInput
 

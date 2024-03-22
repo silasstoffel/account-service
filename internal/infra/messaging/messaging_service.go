@@ -7,29 +7,37 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	sqsType "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 )
 
-type MessagingService struct {
+type MessagingProducer struct {
 	TopicArn    string
 	AwsEndpoint string
 }
 
-func NewMessagingService(topicArn, awsEndpoint string) *MessagingService {
-	return &MessagingService{
+type MessagingConsumer struct {
+	SqsClient           *sqs.Client
+	QueueUrl            string
+	MaxNumberOfMessages int32
+	WaitTimeSeconds     int32
+}
+
+func NewMessagingProducer(topicArn, awsEndpoint string) *MessagingProducer {
+	return &MessagingProducer{
 		TopicArn:    topicArn,
 		AwsEndpoint: awsEndpoint,
 	}
 }
 
-func (ref *MessagingService) Publish(eventType string, data interface{}, source string) error {
+func (ref *MessagingProducer) Publish(eventType string, data interface{}, source string) error {
 	log.Println("Publishing event", eventType, "from", source)
-	awsConfig, err := buildAwsConfig(ref.AwsEndpoint)
+	awsConfig, err := helper.BuildAwsConfig(ref.AwsEndpoint)
 	if err != nil {
 		return err
 	}
@@ -82,27 +90,34 @@ func (ref *MessagingService) Publish(eventType string, data interface{}, source 
 	return nil
 }
 
-func buildAwsConfig(awsEndpoint string) (cfg aws.Config, err error) {
-	awsRegion := "us-east-1"
-	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		if awsEndpoint != "" {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           awsEndpoint,
-				SigningRegion: awsRegion,
-			}, nil
+func (ref *MessagingConsumer) PollingMessages(messageChannel chan<- *sqsType.Message) {
+	for {
+		result, err := ref.SqsClient.ReceiveMessage(context.TODO(), &sqs.ReceiveMessageInput{
+			QueueUrl:            aws.String(ref.QueueUrl),
+			MaxNumberOfMessages: ref.MaxNumberOfMessages,
+			WaitTimeSeconds:     ref.WaitTimeSeconds,
+		})
+
+		if err != nil {
+			log.Printf("Couldn't get messages from queue %v. Here's why: %v\n", ref.QueueUrl, err)
+			continue
 		}
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+
+		for _, message := range result.Messages {
+			messageChannel <- &message
+		}
+	}
+}
+
+func (ref *MessagingConsumer) DeleteMessage(receiptHandle string) error {
+	_, err := ref.SqsClient.DeleteMessage(context.TODO(), &sqs.DeleteMessageInput{
+		QueueUrl:      aws.String(ref.QueueUrl),
+		ReceiptHandle: aws.String(receiptHandle),
 	})
 
-	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(awsRegion),
-		config.WithEndpointResolverWithOptions(customResolver),
-	)
-
 	if err != nil {
-		return aws.Config{}, exception.New(event.ErrorInstanceEventBus, "Error creating event bus instance", err, exception.HttpInternalError)
+		log.Printf("Couldn't delete message from queue %v. Here's why: %v\n", ref.QueueUrl, err)
 	}
 
-	return awsCfg, nil
+	return err
 }
