@@ -2,6 +2,7 @@ package v1handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/silasstoffel/account-service/configs"
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
@@ -12,12 +13,12 @@ import (
 var accountRepository *database.AccountRepository
 var messagingProducer *messaging.MessagingProducer
 
-func GetAccountHandler(router *gin.RouterGroup) {
-	cnx := database.OpenConnection()
+func GetAccountHandler(router *gin.RouterGroup, config *configs.Config) {
+	cnx := database.OpenConnection(config)
 	accountRepository = database.NewAccountRepository(cnx)
 	messagingProducer = messaging.NewMessagingProducer(
-		"arn:aws:sns:us-east-1:000000000000:account-service-topic",
-		"http://localhost:4566",
+		config.Aws.AccountServiceTopicArn,
+		config.Aws.Endpoint,
 	)
 
 	group := router.Group("/accounts")

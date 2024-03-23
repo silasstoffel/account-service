@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/silasstoffel/account-service/configs"
 	router "github.com/silasstoffel/account-service/internal/infra/http"
 )
 
 func main() {
-	routes := router.BuildRouter()
-	routes.Run(":8008")
+	config := configs.NewConfigFromEnvVars()
+	routes := router.BuildRouter(config)
+	routes.Run(fmt.Sprintf(":%s", config.App.ApiPort))
 }

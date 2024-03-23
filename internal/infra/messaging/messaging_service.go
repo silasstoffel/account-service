@@ -81,7 +81,7 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	}
 	publishOutput, err := snsClient.Publish(context.TODO(), publishInput)
 	if err != nil {
-		message := "Error when convert event payload to json."
+		message := "Error to publish event on topic."
 		log.Println(message, "Detail", err.Error())
 		return exception.New(event.ErrorConvertMessageToJson, message, err, exception.HttpInternalError)
 	}

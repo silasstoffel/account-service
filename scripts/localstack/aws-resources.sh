@@ -22,24 +22,37 @@ awslocal sns create-topic --name $account_topic
 # creating queues
 awslocal sqs create-queue --queue-name $account_queue_dlq
 awslocal sqs create-queue --queue-name $account_queue \
-    --attributes '{"RedrivePolicy": "{\"deadLetterTargetArn\":\"'$account_queue_dlq_arn'\",\"maxReceiveCount\":\"5\"}"}'
+    --attributes '{"RedrivePolicy": "{\"deadLetterTargetArn\":\"'$account_queue_dlq_arn'\",\"maxReceiveCount\":\"3\"}"}'
 
 awslocal sqs create-queue --queue-name $webhook_sender_queue_dlq
 awslocal sqs create-queue \
     --queue-name $webhook_sender_queue \
-    --attributes '{"RedrivePolicy": "{\"deadLetterTargetArn\":\"'$webhook_sender_queue_dlq_arn'\",\"maxReceiveCount\":\"5\"}"}'
+    --attributes '{"RedrivePolicy": "{\"deadLetterTargetArn\":\"'$webhook_sender_queue_dlq_arn'\",\"maxReceiveCount\":\"3\"}"}'
 
 # subscribe queue on topic
-awslocal sns subscribe \
+echo "### Subscribing $account_queue_arn to topics $account_topic_arn\n"
+event_subscription_arn=$(awslocal sns subscribe \
     --topic-arn $account_topic_arn \
     --protocol sqs \
-    --notification-endpoint $account_queue_arn
+    --notification-endpoint $account_queue_arn \
+    --output text)
 
-awslocal sns subscribe \
+awslocal sns set-subscription-attributes \
+    --subscription-arn "$event_subscription_arn" \
+    --attribute-name FilterPolicy \
+    --attribute-value '{"EventType":[{"anything-but": ["event.created"]}]}'
+
+echo "### Subscribing $webhook_sender_queue_arn to topics $account_topic_arn\n"
+webhook_subscription_arn=$(awslocal sns subscribe \
     --topic-arn $account_topic_arn \
     --protocol sqs \
-    --notification-endpoint $webhook_sender_queue_arn
+    --notification-endpoint $webhook_sender_queue_arn \
+    --output text)
 
+awslocal sns set-subscription-attributes \
+    --subscription-arn "$webhook_subscription_arn" \
+    --attribute-name FilterPolicy \
+    --attribute-value '{"EventType":["event.created"]}'
 
 echo \n
 echo "###################################"

@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/silasstoffel/account-service/configs"
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
@@ -22,8 +23,8 @@ type MessageSchema struct {
 
 func main() {
 	log.Println("Starting events consumer")
-
-	awsConfig, err := helper.BuildAwsConfig("http://localhost:4566")
+	config := configs.NewConfigFromEnvVars()
+	awsConfig, err := helper.BuildAwsConfig(config.Aws.Endpoint)
 	if err != nil {
 		log.Println("Error creating aws config", err)
 		panic(err)
@@ -35,17 +36,17 @@ func main() {
 	snsClient := sqs.NewFromConfig(awsConfig)
 	consumer := messaging.MessagingConsumer{
 		SqsClient:           snsClient,
-		QueueUrl:            "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service",
+		QueueUrl:            config.Aws.AccountServiceQueueUrl,
 		MaxNumberOfMessages: 10,
 		WaitTimeSeconds:     1,
 	}
 
-	cnx := database.OpenConnection()
+	cnx := database.OpenConnection(config)
 	defer cnx.Close()
 
 	messagingProducer := messaging.NewMessagingProducer(
-		"arn:aws:sns:us-east-1:000000000000:account-service-topic",
-		"http://localhost:4566",
+		config.Aws.AccountServiceTopicArn,
+		config.Aws.Endpoint,
 	)
 	eventRepository := database.NewEventRepository(cnx)
 
