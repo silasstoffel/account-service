@@ -17,18 +17,6 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 )
 
-type MessagingProducer struct {
-	TopicArn    string
-	AwsEndpoint string
-}
-
-type MessagingConsumer struct {
-	SqsClient           *sqs.Client
-	QueueUrl            string
-	MaxNumberOfMessages int32
-	WaitTimeSeconds     int32
-}
-
 func NewMessagingProducer(topicArn, awsEndpoint string) *MessagingProducer {
 	return &MessagingProducer{
 		TopicArn:    topicArn,
