@@ -7,11 +7,12 @@ import (
 )
 
 type AwsConfig struct {
-	Region                 string
-	Endpoint               string // keep empty for production
-	AccountServiceTopicArn string
-	AccountServiceQueueUrl string
-	WebhookSenderQueueUrl  string
+	Region                  string
+	Endpoint                string // keep empty for production
+	AccountServiceTopicArn  string
+	AccountServiceQueueUrl  string
+	WebhookSenderQueueUrl   string
+	WebhookScheduleQueueUrl string
 }
 
 type AppConfig struct {
@@ -52,11 +53,12 @@ func NewConfigFromEnvVars() *Config {
 	return &Config{
 		Env: os.Getenv("ENV"),
 		Aws: AwsConfig{
-			Region:                 os.Getenv("AWS_REGION"),
-			Endpoint:               awsEndpoint,
-			AccountServiceTopicArn: os.Getenv("ACCOUNT_SERVICE_TOPIC_ARN"),
-			AccountServiceQueueUrl: os.Getenv("ACCOUNT_SERVICE_QUEUE_URL"),
-			WebhookSenderQueueUrl:  os.Getenv("WEBHOOK_SENDER_QUEUE_URL"),
+			Region:                  os.Getenv("AWS_REGION"),
+			Endpoint:                awsEndpoint,
+			AccountServiceTopicArn:  os.Getenv("ACCOUNT_SERVICE_TOPIC_ARN"),
+			AccountServiceQueueUrl:  os.Getenv("ACCOUNT_SERVICE_QUEUE_URL"),
+			WebhookSenderQueueUrl:   os.Getenv("WEBHOOK_SENDER_QUEUE_URL"),
+			WebhookScheduleQueueUrl: os.Getenv("WEBHOOK_SCHEDULE_QUEUE_URL"),
 		},
 		App: AppConfig{
 			ApiPort: apiPort,
