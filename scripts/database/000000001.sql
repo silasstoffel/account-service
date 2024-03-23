@@ -16,6 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_account_email ON accounts(email);
 
 CREATE TABLE IF NOT EXISTS events (
     id VARCHAR(40) PRIMARY KEY,
+    data_id VARCHAR(40) NULL,
     occurred_at TIMESTAMP NOT NULL,
     "type" VARCHAR(80) NOT NULL,
     "source" VARCHAR(80) NOT NULL,
@@ -24,4 +25,5 @@ CREATE TABLE IF NOT EXISTS events (
 
 CREATE INDEX IF NOT EXISTS idx_event_type ON events ("type");
 CREATE INDEX IF NOT EXISTS idx_event_source ON events ("source");
+CREATE INDEX IF NOT EXISTS idx_event_data_id ON events ("data_id");
 

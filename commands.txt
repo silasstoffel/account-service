@@ -1,2 +1,22 @@
 # GetMessages
-awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service-queue"
+awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service"
+awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-sender"
+
+awslocal sqs purge-queue --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-sender"
+
+awslocal sns list-subscriptions
+awslocal sqs list-queues
+
+
+# webhook-sender
+awslocal sns set-subscription-attributes \
+    --subscription-arn "arn:aws:sns:us-east-1:000000000000:account-service-topic:307ed6bc-765f-4f84-a7fa-ee9cf122d94a" \
+    --attribute-name FilterPolicy \
+    --attribute-value '{"EventType":["event.created"]}'
+
+# events
+awslocal sns set-subscription-attributes \
+    --subscription-arn "arn:aws:sns:us-east-1:000000000000:account-service-topic:b32921d9-466d-47ac-91f6-11275598498b" \
+    --attribute-name FilterPolicy \
+    --attribute-value '{"EventType":[{"anything-but": ["event.created"]}]}'
+

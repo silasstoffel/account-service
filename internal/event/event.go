@@ -7,6 +7,7 @@ const (
 	AccountCreated  = "account.created"
 	AccountUpdated  = "account.updated"
 	AccountInactive = "account.inactive"
+	EventCreated    = "event.created"
 )
 
 // errors
@@ -18,6 +19,7 @@ const (
 
 type Event struct {
 	Id         string    `json:"id"`
+	DataId     string    `json:"dataId"`
 	OccurredAt time.Time `json:"occurredAt"`
 	Type       string    `json:"type"`
 	Source     string    `json:"source"`
@@ -26,4 +28,8 @@ type Event struct {
 
 type EventProducer interface {
 	Publish(eventType string, data interface{}, source string) error
+}
+
+type EventRepository interface {
+	Create(event Event) error
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
+	usecase "github.com/silasstoffel/account-service/internal/usecase/event"
 )
 
 type MessageSchema struct {
@@ -34,7 +35,7 @@ func main() {
 	snsClient := sqs.NewFromConfig(awsConfig)
 	consumer := messaging.MessagingConsumer{
 		SqsClient:           snsClient,
-		QueueUrl:            "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service-queue",
+		QueueUrl:            "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service",
 		MaxNumberOfMessages: 10,
 		WaitTimeSeconds:     1,
 	}
@@ -42,7 +43,16 @@ func main() {
 	cnx := database.OpenConnection()
 	defer cnx.Close()
 
+	messagingProducer := messaging.NewMessagingProducer(
+		"arn:aws:sns:us-east-1:000000000000:account-service-topic",
+		"http://localhost:4566",
+	)
 	eventRepository := database.NewEventRepository(cnx)
+
+	createEventUseCase := usecase.CreateEventUseCase{
+		EventRepository: eventRepository,
+		Messaging:       messagingProducer,
+	}
 	messageChannel := make(chan *types.Message, 2)
 
 	go consumer.PollingMessages(messageChannel)
@@ -59,7 +69,7 @@ func main() {
 			panic(err)
 		}
 
-		err := eventRepository.Create(message)
+		err := createEventUseCase.CreateEventUseCase(message)
 		if err != nil {
 			log.Println("Error creating event", err)
 			continue

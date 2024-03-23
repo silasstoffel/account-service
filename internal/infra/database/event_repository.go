@@ -22,7 +22,7 @@ func (repository *EventRepository) Create(event event.Event) error {
 	loggerPrefix := "[event-repository]"
 	log.Println(loggerPrefix, "Creating event...")
 
-	stmt := `INSERT INTO events (id, occurred_at, "type", "source", "data") VALUES ($1, $2, $3, $4, $5)`
+	stmt := `INSERT INTO events (id, occurred_at, "type", "source", "data", data_id) VALUES ($1, $2, $3, $4, $5, $6)`
 	_, err := repository.Db.Exec(
 		stmt,
 		event.Id,
@@ -30,6 +30,7 @@ func (repository *EventRepository) Create(event event.Event) error {
 		event.Type,
 		event.Source,
 		event.Data,
+		event.DataId,
 	)
 
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -51,12 +52,15 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	}
 
 	id := helper.NewULID()
+	dataId := extractDataId(data)
+
 	message := event.Event{
 		Id:         id,
 		OccurredAt: time.Now().UTC(),
 		Type:       eventType,
 		Source:     source,
 		Data:       string(dataAsJson),
+		DataId:     dataId,
 	}
 	messageAsJson, _ := json.Marshal(message)
 	attrs := map[string]types.MessageAttributeValue{
@@ -120,4 +124,19 @@ func (ref *MessagingConsumer) DeleteMessage(receiptHandle string) error {
 	}
 
 	return err
+}
+
+func extractDataId(data interface{}) string {
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	dataId := ""
+	if v.Kind() == reflect.Struct {
+		_, ok := v.Type().FieldByName("Id")
+		if ok {
+			return v.FieldByName("Id").Interface().(string)
+		}
+	}
+	return dataId
 }
