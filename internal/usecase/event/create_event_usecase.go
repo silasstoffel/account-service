@@ -13,7 +13,7 @@ type CreateEventUseCase struct {
 
 func (ref *CreateEventUseCase) CreateEventUseCase(input event.Event) error {
 	loggerPrefix := "[create-event-usecase]"
-	log.Println(loggerPrefix, "Creating event...")
+	log.Println(loggerPrefix, "Creating event - Type:", input.Type)
 
 	err := ref.EventRepository.Create(input)
 

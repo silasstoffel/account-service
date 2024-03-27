@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/silasstoffel/account-service/configs"
 	"github.com/silasstoffel/account-service/internal/event"
+	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
 )
@@ -30,6 +31,9 @@ func main() {
 		panic(err)
 	}
 
+	cnx := database.OpenConnection(config)
+	defer cnx.Close()
+
 	snsClient := sqs.NewFromConfig(awsConfig)
 	consumer := messaging.MessagingConsumer{
 		SqsClient:           snsClient,
@@ -44,6 +48,7 @@ func main() {
 		queueUrl:  config.Aws.WebhookSenderQueueUrl,
 	}
 
+	subscriptionRepository := database.NewSubscriptionRepository(cnx)
 	messageChannel := make(chan *types.Message, 2)
 
 	go consumer.PollingMessages(messageChannel)
@@ -55,6 +60,19 @@ func main() {
 			fmt.Println("Error parsing message", err)
 			continue
 		}
+
+		var event event.Event
+		if err := dataMessageToEvent(&message.Data, &event); err != nil {
+			fmt.Println("Error when convert message to event", err)
+			continue
+		}
+
+		subscriptions, err := subscriptionRepository.GetByEventType(event.Type)
+		if err != nil {
+			fmt.Println("Error when get subscriptions to schedule", err)
+			continue
+		}
+		fmt.Println("Subscriptions", subscriptions)
 		err = scheduleSender.schedule(message)
 		if err != nil {
 			fmt.Println("Error when schedule messaging", err)
@@ -85,5 +103,14 @@ func (ref *sqsSender) schedule(message interface{}) error {
 		return err
 	}
 	fmt.Println("Message schedule", *output.MessageId)
+	return nil
+}
+
+func dataMessageToEvent(message *string, event *event.Event) error {
+	if err := json.Unmarshal([]byte(*message), event); err != nil {
+		message := "Error when convert event payload to json."
+		log.Println(message, "Detail", err.Error())
+		return err
+	}
 	return nil
 }

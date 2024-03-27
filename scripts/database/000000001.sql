@@ -27,3 +27,13 @@ CREATE INDEX IF NOT EXISTS idx_event_type ON events ("type");
 CREATE INDEX IF NOT EXISTS idx_event_source ON events ("source");
 CREATE INDEX IF NOT EXISTS idx_event_data_id ON events ("data_id");
 
+
+CREATE TABLE IF NOT EXISTS webhook_subscriptions(
+    id VARCHAR(40) PRIMARY KEY,
+    event_type VARCHAR(80) NOT NULL,
+    "url" VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_event_type ON webhook_subscriptions ("event_type");
