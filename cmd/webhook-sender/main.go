@@ -48,13 +48,9 @@ func main() {
 	defer cnx.Close()
 
 	snsClient := sqs.NewFromConfig(awsConfig)
-	consumer := messaging.MessagingConsumer{
-		SqsClient:           snsClient,
-		QueueUrl:            config.Aws.WebhookSenderQueueUrl,
-		MaxNumberOfMessages: 1,
-		WaitTimeSeconds:     10,
-		VisibilityTimeout:   15,
-	}
+	consumer := messaging.NewMessagingConsumer(config.Aws.WebhookSenderQueueUrl, snsClient)
+	consumer.VisibilityTimeout = 15
+	consumer.WaitTimeSeconds = 10
 
 	messageChannel := make(chan *types.Message)
 

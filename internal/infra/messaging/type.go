@@ -25,3 +25,13 @@ const (
 	ErrorParserMessageFromTopic = "ErrorParserMessageFromTopic"
 	ErrorParserMessageFromQueue = "ErrorParserMessageFromQueue"
 )
+
+func NewMessagingConsumer(queueUrl string, SqsClient *sqs.Client) *MessagingConsumer {
+	return &MessagingConsumer{
+		SqsClient:           SqsClient,
+		QueueUrl:            queueUrl,
+		MaxNumberOfMessages: 1,
+		WaitTimeSeconds:     5,
+		VisibilityTimeout:   30,
+	}
+}
