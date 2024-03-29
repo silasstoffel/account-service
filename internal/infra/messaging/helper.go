@@ -34,3 +34,17 @@ func ExtractMessageFromTopic(rawMessage *types.Message, message interface{}) err
 	}
 	return nil
 }
+
+func ExtractMessageFromQueue(rawMessage *types.Message, message interface{}) error {
+	if err := json.Unmarshal([]byte(*rawMessage.Body), &message); err != nil {
+		detail := "Error when parser message from queue"
+		log.Println(message, err)
+		return exception.New(
+			ErrorParserMessageFromQueue,
+			detail,
+			err,
+			exception.HttpInternalError,
+		)
+	}
+	return nil
+}

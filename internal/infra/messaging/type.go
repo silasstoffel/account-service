@@ -18,6 +18,7 @@ type MessagingConsumer struct {
 	QueueUrl            string
 	MaxNumberOfMessages int32
 	WaitTimeSeconds     int32
+	VisibilityTimeout   int32
 }
 
 const (

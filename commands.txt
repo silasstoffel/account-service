@@ -1,11 +1,23 @@
 # GetMessages
-awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service"
-awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-sender"
+awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service" --color on --max-number-of-messages 10
+awslocal sqs receive-message --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-sender" --color on --max-number-of-messages 10
 
+
+# List Queues
+awslocal sqs list-queues
+awslocal sqs list-queues --output text
+awslocal sqs list-queues --output json
+
+# Clear queues
+awslocal sqs purge-queue --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service-dlq"
+awslocal sqs purge-queue --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/account-service"
+awslocal sqs purge-queue --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-schedule-dlq"
+awslocal sqs purge-queue --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-schedule"
 awslocal sqs purge-queue --queue-url "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/webhook-sender"
 
+#sns
 awslocal sns list-subscriptions
-awslocal sqs list-queues
+
 
 
 # webhook-sender

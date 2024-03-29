@@ -88,6 +88,7 @@ func (ref *MessagingConsumer) PollingMessages(messageChannel chan<- *sqsType.Mes
 			QueueUrl:            aws.String(ref.QueueUrl),
 			MaxNumberOfMessages: ref.MaxNumberOfMessages,
 			WaitTimeSeconds:     ref.WaitTimeSeconds,
+			VisibilityTimeout:   ref.VisibilityTimeout,
 		})
 
 		if err != nil {

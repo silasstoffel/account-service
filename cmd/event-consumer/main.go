@@ -29,8 +29,9 @@ func main() {
 	consumer := messaging.MessagingConsumer{
 		SqsClient:           snsClient,
 		QueueUrl:            config.Aws.AccountServiceQueueUrl,
-		MaxNumberOfMessages: 10,
+		MaxNumberOfMessages: 1,
 		WaitTimeSeconds:     1,
+		VisibilityTimeout:   30,
 	}
 
 	cnx := database.OpenConnection(config)
@@ -46,7 +47,7 @@ func main() {
 		EventRepository: eventRepository,
 		Messaging:       messagingProducer,
 	}
-	messageChannel := make(chan *types.Message, 2)
+	messageChannel := make(chan *types.Message)
 
 	go consumer.PollingMessages(messageChannel)
 

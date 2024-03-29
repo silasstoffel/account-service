@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/silasstoffel/account-service/configs"
+	"github.com/silasstoffel/account-service/internal/domain/webhook"
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
@@ -20,6 +23,20 @@ var message event.Event
 type sqsSender struct {
 	sqsClient *sqs.Client
 	queueUrl  string
+}
+
+type subscriptionMessageInput struct {
+	Id        string `json:"id"`
+	EventType string `json:"eventType"`
+	Url       string `json:"url"`
+}
+
+type scheduleMessageInput struct {
+	EventId        string                   `json:"eventId"`
+	SubscriptionId string                   `json:"subscriptionId"`
+	EventType      string                   `json:"eventType"`
+	Data           string                   `json:"data"`
+	Subscription   subscriptionMessageInput `json:"subscription"`
 }
 
 func main() {
@@ -38,8 +55,9 @@ func main() {
 	consumer := messaging.MessagingConsumer{
 		SqsClient:           snsClient,
 		QueueUrl:            config.Aws.WebhookScheduleQueueUrl,
-		MaxNumberOfMessages: 10,
-		WaitTimeSeconds:     1,
+		MaxNumberOfMessages: 1,
+		WaitTimeSeconds:     3,
+		VisibilityTimeout:   20,
 	}
 
 	scheduleSenderConfig := sqs.NewFromConfig(awsConfig)
@@ -49,7 +67,7 @@ func main() {
 	}
 
 	subscriptionRepository := database.NewSubscriptionRepository(cnx)
-	messageChannel := make(chan *types.Message, 2)
+	messageChannel := make(chan *types.Message)
 
 	go consumer.PollingMessages(messageChannel)
 
@@ -72,8 +90,13 @@ func main() {
 			fmt.Println("Error when get subscriptions to schedule", err)
 			continue
 		}
-		fmt.Println("Subscriptions", subscriptions)
-		err = scheduleSender.schedule(message)
+
+		messageBatch, err := buildMessageBatch(subscriptions, event)
+		if err != nil {
+			fmt.Println("Error when build message batch", err)
+			continue
+		}
+		err = scheduleSender.schedule(messageBatch)
 		if err != nil {
 			fmt.Println("Error when schedule messaging", err)
 			continue
@@ -83,26 +106,51 @@ func main() {
 	}
 }
 
-func (ref *sqsSender) schedule(message interface{}) error {
-	fmt.Println("Scheduling message")
-	dataAsJson, err := json.Marshal(message)
-	if err != nil {
-		message := "Error when convert event payload to json."
-		log.Println(message, "Detail", err.Error())
-		return err
-	}
+func buildMessageBatch(subscriptions []webhook.Subscription, event event.Event) ([]types.SendMessageBatchRequestEntry, error) {
+	var messageBatch []types.SendMessageBatchRequestEntry
+	counter := 1
+	for _, subscription := range subscriptions {
+		data := &scheduleMessageInput{
+			EventId:        event.Id,
+			SubscriptionId: subscription.Id,
+			EventType:      event.Type,
+			Data:           event.Data,
+			Subscription: subscriptionMessageInput{
+				Id:        subscription.Id,
+				EventType: subscription.EventType,
+				Url:       subscription.Url,
+			},
+		}
+		messageBody, err := json.Marshal(data)
 
-	msg := string(dataAsJson)
-	output, err := ref.sqsClient.SendMessage(context.TODO(), &sqs.SendMessageInput{
-		MessageBody: &msg,
-		QueueUrl:    &ref.queueUrl,
+		if err != nil {
+			detail := "Error when convert event payload to json."
+			log.Println(detail, "Detail", err.Error())
+			return messageBatch, err
+		}
+
+		messageBatch = append(messageBatch, types.SendMessageBatchRequestEntry{
+			Id:          aws.String(strconv.Itoa(counter)),
+			MessageBody: aws.String(string(messageBody)),
+		})
+		counter++
+	}
+	return messageBatch, nil
+}
+
+func (ref *sqsSender) schedule(entries []types.SendMessageBatchRequestEntry) error {
+	fmt.Println("Scheduling message")
+	_, err := ref.sqsClient.SendMessageBatch(context.TODO(), &sqs.SendMessageBatchInput{
+		Entries:  entries,
+		QueueUrl: aws.String(ref.queueUrl),
 	})
 
 	if err != nil {
 		fmt.Println("Error sending message", err)
 		return err
 	}
-	fmt.Println("Message schedule", *output.MessageId)
+
+	fmt.Println("Message scheduled.")
 	return nil
 }
 
