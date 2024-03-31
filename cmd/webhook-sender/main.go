@@ -54,7 +54,7 @@ func main() {
 
 	snsClient := sqs.NewFromConfig(awsConfig)
 	consumer := messaging.NewMessagingConsumer(config.Aws.WebhookSenderQueueUrl, snsClient)
-	consumer.VisibilityTimeout = 15
+	consumer.VisibilityTimeout = 45
 	consumer.WaitTimeSeconds = 10
 
 	transactionRepository = database.NewWebhookTransactionRepository(cnx)
@@ -64,7 +64,7 @@ func main() {
 	go consumer.PollingMessages(messageChannel)
 
 	var message messageDetail
-	ttl := 5 * time.Second
+	ttl := 3 * time.Second
 	for rawMessage := range messageChannel {
 		log.Println("Processing message", *rawMessage.MessageId)
 
@@ -74,10 +74,13 @@ func main() {
 			continue
 		}
 
+		delete := true
 		stats, err := notify(message, ttl)
 		if err != nil {
-			log.Println("Error notifying webhook", err)
-			continue
+			detail := err.(*exception.Exception)
+			if detail.Code == webhook.WebhookTransactionNotificationTimeout {
+				delete = false
+			}
 		}
 
 		err = upsert(message, stats)
@@ -85,8 +88,9 @@ func main() {
 			log.Println("Error upserting transaction", err)
 			continue
 		}
-
-		consumer.DeleteMessage(*rawMessage.ReceiptHandle)
+		if delete {
+			consumer.DeleteMessage(*rawMessage.ReceiptHandle)
+		}
 		log.Println("Processed message:", *rawMessage.MessageId)
 	}
 }
@@ -96,8 +100,8 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 	stats := notifyStats{startedAt: message.SendAt, statusCode: 0}
 	payload, err := json.Marshal(message)
 	if err != nil {
+		stats.finishedAt = time.Now().UTC()
 		log.Println("Error marshalling message on notify webhook", err)
-		stats.finishedAt = time.Now()
 		return stats, err
 	}
 
@@ -107,6 +111,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 		strings.NewReader(string(payload)),
 	)
 	if err != nil {
+		stats.finishedAt = time.Now().UTC()
 		log.Println("Error creating request to notify webhook", err)
 		return stats, err
 	}
@@ -115,18 +120,21 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 	req.Header.Set("X-Send-At", time.Now().UTC().Format(time.RFC3339))
 	req.Header.Set("User-Agent", "account-service/webhook")
 
-	client := &http.Client{
-		Timeout: ttl,
-	}
+	client := &http.Client{Timeout: ttl}
 	resp, err := client.Do(req)
-	stats.finishedAt = time.Now().UTC()
-	stats.statusCode = resp.StatusCode
-
 	if err != nil {
-		log.Println("Error notifying webhook", err)
+		stats.finishedAt = time.Now().UTC()
+		isTimeout := strings.Contains(err.Error(), "Client.Timeout")
+		if isTimeout {
+			message := "Webhook notification timeout"
+			log.Println(message, err.Error())
+			return stats, exception.New(webhook.WebhookTransactionNotificationTimeout, "Webhook notification timeout", nil, exception.HttpClientError)
+		}
 		return stats, err
 	}
 	defer resp.Body.Close()
+	stats.finishedAt = time.Now().UTC()
+	stats.statusCode = resp.StatusCode
 
 	return stats, nil
 }

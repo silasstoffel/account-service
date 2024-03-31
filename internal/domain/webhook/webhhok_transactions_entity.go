@@ -17,5 +17,6 @@ type WebhookTransaction struct {
 
 // Error codes
 const (
-	WebhookTransactionNotFound = "WEBHOOK_TRANSACTION_NOT_FOUND"
+	WebhookTransactionNotFound            = "WEBHOOK_TRANSACTION_NOT_FOUND"
+	WebhookTransactionNotificationTimeout = "WEBHOOK_TRANSACTION_NOTIFICATION_TIMEOUT"
 )
