@@ -25,18 +25,12 @@ type sqsSender struct {
 	queueUrl  string
 }
 
-type subscriptionMessageInput struct {
-	Id        string `json:"id"`
-	EventType string `json:"eventType"`
-	Url       string `json:"url"`
-}
-
 type scheduleMessageInput struct {
-	EventId        string                   `json:"eventId"`
-	SubscriptionId string                   `json:"subscriptionId"`
-	EventType      string                   `json:"eventType"`
-	Data           string                   `json:"data"`
-	Subscription   subscriptionMessageInput `json:"subscription"`
+	MessageId      string `json:"messageId"`
+	EventId        string `json:"eventId"`
+	SubscriptionId string `json:"subscriptionId"`
+	EventType      string `json:"eventType"`
+	Data           string `json:"data"`
 }
 
 func main() {
@@ -110,16 +104,13 @@ func buildMessageBatch(subscriptions []webhook.Subscription, event event.Event) 
 	var messageBatch []types.SendMessageBatchRequestEntry
 	counter := 1
 	for _, subscription := range subscriptions {
+		messageId := helper.NewULID()
 		data := &scheduleMessageInput{
+			MessageId:      messageId,
 			EventId:        event.Id,
 			SubscriptionId: subscription.Id,
 			EventType:      event.Type,
 			Data:           event.Data,
-			Subscription: subscriptionMessageInput{
-				Id:        subscription.Id,
-				EventType: subscription.EventType,
-				Url:       subscription.Url,
-			},
 		}
 		messageBody, err := json.Marshal(data)
 
