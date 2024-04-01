@@ -12,10 +12,13 @@ import (
 
 var accountRepository *database.AccountRepository
 var messagingProducer *messaging.MessagingProducer
+var accountPermissionRepository *database.AccountPermissionRepository
 
 func GetAccountHandler(router *gin.RouterGroup, config *configs.Config) {
 	cnx := database.OpenConnection(config)
 	accountRepository = database.NewAccountRepository(cnx)
+	accountPermissionRepository = database.NewAccountPermissionRepository(cnx)
+
 	messagingProducer = messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,
 		config.Aws.Endpoint,
@@ -31,7 +34,10 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config) {
 
 func list() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		listAccount := usecase.ListAccount{AccountRepository: accountRepository}
+		listAccount := usecase.ListAccount{
+			AccountRepository:           accountRepository,
+			PermissionAccountRepository: accountPermissionRepository,
+		}
 		input := domain.ListAccountInput{Page: 1, Limit: 12}
 		accounts, err := listAccount.ListAccountUseCase(input)
 
@@ -46,7 +52,10 @@ func list() gin.HandlerFunc {
 func get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		findAccount := usecase.FindAccount{AccountRepository: accountRepository}
+		findAccount := usecase.FindAccount{
+			AccountRepository:           accountRepository,
+			PermissionAccountRepository: accountPermissionRepository,
+		}
 		account, err := findAccount.FindAccountUseCase(id)
 
 		if err != nil {
@@ -68,8 +77,9 @@ func get() gin.HandlerFunc {
 func create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		createAccount := usecase.CreateAccount{
-			AccountRepository: accountRepository,
-			Messaging:         messagingProducer,
+			AccountRepository:           accountRepository,
+			PermissionAccountRepository: accountPermissionRepository,
+			Messaging:                   messagingProducer,
 		}
 		var input usecase.CreateAccountInput
 
@@ -92,8 +102,9 @@ func create() gin.HandlerFunc {
 func update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		updateAccountInstance := usecase.UpdateAccount{
-			AccountRepository: accountRepository,
-			Messaging:         messagingProducer,
+			AccountRepository:           accountRepository,
+			Messaging:                   messagingProducer,
+			PermissionAccountRepository: accountPermissionRepository,
 		}
 		var input usecase.UpdateAccountInput
 

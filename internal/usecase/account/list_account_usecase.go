@@ -3,24 +3,33 @@ package usecase
 import (
 	"log"
 
+	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 )
 
 type ListAccount struct {
-	AccountRepository domain.AccountRepository
+	AccountRepository           domain.AccountRepository
+	PermissionAccountRepository accountDomain.AccountPermissionRepository
 }
 
 func (ref *ListAccount) ListAccountUseCase(input domain.ListAccountInput) ([]domain.Account, error) {
 	const listLoggerPrefix = "[list-account-usecase]"
-	log.Println(listLoggerPrefix, "Listing accounts")
 
 	accounts, err := ref.AccountRepository.List(input)
 
 	if err != nil {
+		log.Println(listLoggerPrefix, "Error when listing accounts", err)
 		return []domain.Account{}, err
 	}
 
-	log.Println(listLoggerPrefix, "Listed accounts")
+	for key, _ := range accounts {
+		p, err := ref.PermissionAccountRepository.FindByAccountId(accounts[key].Id)
+		if err != nil {
+			log.Println(listLoggerPrefix, "Error when listing account permissions", err)
+			return []domain.Account{}, err
+		}
+		accounts[key].Permissions = p
+	}
 
 	return accounts, nil
 }

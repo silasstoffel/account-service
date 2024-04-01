@@ -130,7 +130,9 @@ func buildMessageBatch(subscriptions []webhook.Subscription, event event.Event) 
 }
 
 func (ref *sqsSender) schedule(entries []types.SendMessageBatchRequestEntry) error {
-	fmt.Println("Scheduling message")
+	if len(entries) == 0 {
+		return nil
+	}
 	_, err := ref.sqsClient.SendMessageBatch(context.TODO(), &sqs.SendMessageBatchInput{
 		Entries:  entries,
 		QueueUrl: aws.String(ref.queueUrl),
@@ -141,7 +143,6 @@ func (ref *sqsSender) schedule(entries []types.SendMessageBatchRequestEntry) err
 		return err
 	}
 
-	fmt.Println("Message scheduled.")
 	return nil
 }
 

@@ -6,16 +6,17 @@ import (
 )
 
 type Account struct {
-	Id        string    `json:"id"`
-	Name      string    `json:"name"`
-	LastName  string    `json:"lastName"`
-	FullName  string    `json:"fullName"`
-	Email     string    `json:"email"`
-	Phone     string    `json:"phone"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	Active    bool      `json:"active"`
-	HashedPwd string    `json:"-"`
+	Id          string              `json:"id"`
+	Name        string              `json:"name"`
+	LastName    string              `json:"lastName"`
+	FullName    string              `json:"fullName"`
+	Email       string              `json:"email"`
+	Phone       string              `json:"phone"`
+	CreatedAt   time.Time           `json:"createdAt"`
+	UpdatedAt   time.Time           `json:"updatedAt"`
+	Active      bool                `json:"active"`
+	HashedPwd   string              `json:"-"`
+	Permissions []AccountPermission `json:"permissions,omitempty"`
 }
 
 func (account Account) ToDomain() Account {

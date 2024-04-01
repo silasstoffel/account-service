@@ -10,16 +10,18 @@ import (
 )
 
 type UpdateAccountInput struct {
-	Name     string
-	LastName string
-	Email    string
-	Phone    string
-	Password string
+	Name        string
+	LastName    string
+	Email       string
+	Phone       string
+	Password    string
+	Permissions []AccountPermissionInput
 }
 
 type UpdateAccount struct {
-	AccountRepository accountDomain.AccountRepository
-	Messaging         event.EventProducer
+	AccountRepository           accountDomain.AccountRepository
+	Messaging                   event.EventProducer
+	PermissionAccountRepository accountDomain.AccountPermissionRepository
 }
 
 func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string) error {
@@ -59,9 +61,9 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 
 func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInput) (accountDomain.Account, error) {
 	const loggerPrefix = "[update-account-usecase]"
-	log.Println(loggerPrefix, "Updating account...")
 
 	if err := ref.checkInput(input, id); err != nil {
+		log.Println(loggerPrefix, "Error when creating password", "id:", id, "Detail:", err.Error())
 		return accountDomain.Account{}, err
 	}
 
@@ -70,6 +72,7 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 		var err error
 		pwd, err = service.CreateHash(input.Password)
 		if err != nil {
+			log.Println(loggerPrefix, "Error when creating password", "id:", id, "Detail:", err.Error())
 			return accountDomain.Account{}, err
 		}
 	}
@@ -85,12 +88,30 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 	updatedAccount, err := ref.AccountRepository.Update(id, account)
 
 	if err != nil {
+		log.Println(loggerPrefix, "Error when updating account", "id:", id, "Detail:", err.Error())
 		return accountDomain.Account{}, err
+	}
+
+	if len(input.Permissions) > 0 {
+		ref.PermissionAccountRepository.DeleteByAccount(updatedAccount.Id)
+		updatedAccount.Permissions = []accountDomain.AccountPermission{}
+		for _, permission := range input.Permissions {
+			p := accountDomain.AccountPermission{
+				AppId:     permission.AppId,
+				Scope:     permission.Scope,
+				AccountId: updatedAccount.Id,
+			}
+			err = ref.PermissionAccountRepository.Create(p)
+			if err != nil {
+				log.Println(loggerPrefix, "Error when creating account permission. Detail:", err)
+				return accountDomain.Account{}, err
+			}
+			updatedAccount.Permissions = append(updatedAccount.Permissions, p)
+		}
 	}
 
 	data := updatedAccount.ToDomain()
 	go ref.Messaging.Publish(event.AccountUpdated, data, "account-service")
-	log.Println(loggerPrefix, "Account updated", "id:", id)
 
 	return data, nil
 }

@@ -51,3 +51,20 @@ CREATE TABLE IF NOT EXISTS webhook_transactions(
 
 CREATE INDEX IF NOT EXISTS idx_webhook_transactions_event_type ON webhook_transactions("event_type");
 CREATE INDEX IF NOT EXISTS idx_webhook_transactions_event_id ON webhook_transactions("event_id");
+
+
+CREATE TABLE permissions (
+    app_id VARCHAR(80),
+    scope VARCHAR(80),
+    active BOOLEAN DEFAULT true,
+    PRIMARY KEY (app_id, scope)
+);
+
+CREATE TABLE account_permissions (
+    account_id VARCHAR(36),
+    app_id VARCHAR(80),
+    scope VARCHAR(80),
+    PRIMARY KEY (account_id, app_id, scope)
+);
+
+CREATE INDEX idx_account_permissions_account_id ON account_permissions(account_id);

@@ -10,17 +10,23 @@ import (
 	"github.com/silasstoffel/account-service/internal/service"
 )
 
+type AccountPermissionInput struct {
+	AppId string `json:"appId"`
+	Scope string `json:"scope"`
+}
 type CreateAccountInput struct {
-	Name     string
-	LastName string
-	Email    string
-	Phone    string
-	Password string
+	Name        string
+	LastName    string
+	Email       string
+	Phone       string
+	Password    string
+	Permissions []AccountPermissionInput
 }
 
 type CreateAccount struct {
-	AccountRepository accountDomain.AccountRepository
-	Messaging         event.EventProducer
+	AccountRepository           accountDomain.AccountRepository
+	PermissionAccountRepository accountDomain.AccountPermissionRepository
+	Messaging                   event.EventProducer
 }
 
 func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
@@ -56,7 +62,6 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 
 func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accountDomain.Account, error) {
 	const loggerPrefix = "[create-account-usecase]"
-	log.Println(loggerPrefix, "Creating account...")
 
 	if err := ref.checkInput(input); err != nil {
 		return accountDomain.Account{}, err
@@ -64,6 +69,7 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 
 	pwd, err := service.CreateHash(input.Password)
 	if err != nil {
+		log.Println(loggerPrefix, "Error creating password hash", "detail:", err)
 		return accountDomain.Account{}, err
 	}
 
@@ -80,10 +86,27 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 	createdAccount, err := ref.AccountRepository.Create(account)
 
 	if err != nil {
+		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
 		return accountDomain.Account{}, err
 	}
 
-	log.Println(loggerPrefix, "Account created", "id:", createdAccount.Id)
+	if len(input.Permissions) > 0 {
+		ref.PermissionAccountRepository.DeleteByAccount(createdAccount.Id)
+		createdAccount.Permissions = []accountDomain.AccountPermission{}
+		for _, permission := range input.Permissions {
+			p := accountDomain.AccountPermission{
+				AppId:     permission.AppId,
+				Scope:     permission.Scope,
+				AccountId: createdAccount.Id,
+			}
+			err = ref.PermissionAccountRepository.Create(p)
+			if err != nil {
+				log.Println(loggerPrefix, "Error when creating account permission. Detail:", err)
+				return accountDomain.Account{}, err
+			}
+			createdAccount.Permissions = append(createdAccount.Permissions, p)
+		}
+	}
 	data := createdAccount.ToDomain()
 
 	go ref.Messaging.Publish(event.AccountCreated, data, "account-service")
