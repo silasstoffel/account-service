@@ -26,14 +26,14 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 	)
 
 	group := router.Group("/accounts")
-	group.GET("/", list())
-	group.GET("/:id", get())
-	group.POST("/", create())
-	group.PUT("/:id", update())
-	group.PATCH("/:id/disabled", create())
+	group.GET("/", listAccount())
+	group.GET("/:id", getAccount())
+	group.POST("/", createAccount())
+	group.PUT("/:id", updateAccount())
+	group.PATCH("/:id/disabled", createAccount())
 }
 
-func list() gin.HandlerFunc {
+func listAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		listAccount := usecase.ListAccount{
 			AccountRepository:           accountRepository,
@@ -50,7 +50,7 @@ func list() gin.HandlerFunc {
 	}
 }
 
-func get() gin.HandlerFunc {
+func getAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		findAccount := usecase.FindAccount{
@@ -75,7 +75,7 @@ func get() gin.HandlerFunc {
 	}
 }
 
-func create() gin.HandlerFunc {
+func createAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		createAccount := usecase.CreateAccount{
 			AccountRepository:           accountRepository,
@@ -100,7 +100,7 @@ func create() gin.HandlerFunc {
 	}
 }
 
-func update() gin.HandlerFunc {
+func updateAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		updateAccountInstance := usecase.UpdateAccount{
 			AccountRepository:           accountRepository,
