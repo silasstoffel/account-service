@@ -15,6 +15,8 @@ func BuildRouter(config *configs.Config, db *sql.DB) *gin.Engine {
 
 	route.GET("/health-check", handler.HealthCheckHandler())
 
+	v1handler.GetAuthHandler(route, config, db)
+
 	v1Group := route.Group("/v1")
 	v1handler.GetAccountHandler(v1Group, config, db)
 
