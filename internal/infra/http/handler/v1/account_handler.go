@@ -1,6 +1,8 @@
 package v1handler
 
 import (
+	"database/sql"
+
 	"github.com/gin-gonic/gin"
 	"github.com/silasstoffel/account-service/configs"
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
@@ -14,10 +16,9 @@ var accountRepository *database.AccountRepository
 var messagingProducer *messaging.MessagingProducer
 var accountPermissionRepository *database.AccountPermissionRepository
 
-func GetAccountHandler(router *gin.RouterGroup, config *configs.Config) {
-	cnx := database.OpenConnection(config)
-	accountRepository = database.NewAccountRepository(cnx)
-	accountPermissionRepository = database.NewAccountPermissionRepository(cnx)
+func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
+	accountRepository = database.NewAccountRepository(db)
+	accountPermissionRepository = database.NewAccountPermissionRepository(db)
 
 	messagingProducer = messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,

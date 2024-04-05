@@ -7,12 +7,10 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/silasstoffel/account-service/configs"
+	"github.com/silasstoffel/account-service/internal/exception"
 )
 
-const prefix = "[database]"
-
-func OpenConnection(config *configs.Config) *sql.DB {
-	log.Println(prefix, "Opening postgres connection...")
+func OpenConnection(config *configs.Config) (*sql.DB, error) {
 	dataSourceName := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		config.Db.Host,
@@ -23,23 +21,24 @@ func OpenConnection(config *configs.Config) *sql.DB {
 	)
 
 	db, err := sql.Open("postgres", dataSourceName)
-
 	if err != nil {
-		log.Println(prefix, "error connection")
-		panic(err)
+		message := "Failed to open connection to database"
+		log.Println(message, "Details:", err)
+		return nil, exception.New(exception.UnknownError, message, err, 500)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.Println(prefix, "Error when ping database")
-		panic(err)
+		message := "Failed to ping database"
+		return nil, exception.New(exception.UnknownError, message, err, 500)
 	}
-	log.Println(prefix, "Connection opened")
-	return db
+
+	return db, nil
 }
 
-func CloseConnection(cnx *sql.DB) {
-	log.Println(prefix, "Closing connection")
-	cnx.Close()
-	log.Println(prefix, "Connection closed")
+func CloseConnection(cnx *sql.DB) error {
+	if err := cnx.Close(); err != nil {
+		return exception.New(exception.UnknownError, "Failed to ping database", err, 500)
+	}
+	return nil
 }
