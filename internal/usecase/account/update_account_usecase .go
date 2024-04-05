@@ -92,25 +92,14 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 		return accountDomain.Account{}, err
 	}
 
-	if len(input.Permissions) > 0 {
-		ref.PermissionAccountRepository.DeleteByAccount(updatedAccount.Id)
-		updatedAccount.Permissions = []accountDomain.AccountPermission{}
-		for _, permission := range input.Permissions {
-			p := accountDomain.AccountPermission{
-				AppId:     permission.AppId,
-				Scope:     permission.Scope,
-				AccountId: updatedAccount.Id,
-			}
-			err = ref.PermissionAccountRepository.Create(p)
-			if err != nil {
-				log.Println(loggerPrefix, "Error when creating account permission. Detail:", err)
-				return accountDomain.Account{}, err
-			}
-			updatedAccount.Permissions = append(updatedAccount.Permissions, p)
-		}
+	permissions, err := createAccountPermissions(input.Permissions, updatedAccount.Id, ref.PermissionAccountRepository)
+	if err != nil {
+		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
+		return accountDomain.Account{}, err
 	}
-
+	updatedAccount.Permissions = permissions
 	data := updatedAccount.ToDomain()
+
 	go ref.Messaging.Publish(event.AccountUpdated, data, "account-service")
 
 	return data, nil

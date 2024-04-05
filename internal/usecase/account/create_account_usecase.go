@@ -90,26 +90,42 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 		return accountDomain.Account{}, err
 	}
 
-	if len(input.Permissions) > 0 {
-		ref.PermissionAccountRepository.DeleteByAccount(createdAccount.Id)
-		createdAccount.Permissions = []accountDomain.AccountPermission{}
-		for _, permission := range input.Permissions {
-			p := accountDomain.AccountPermission{
-				AppId:     permission.AppId,
-				Scope:     permission.Scope,
-				AccountId: createdAccount.Id,
-			}
-			err = ref.PermissionAccountRepository.Create(p)
-			if err != nil {
-				log.Println(loggerPrefix, "Error when creating account permission. Detail:", err)
-				return accountDomain.Account{}, err
-			}
-			createdAccount.Permissions = append(createdAccount.Permissions, p)
-		}
+	permissions, err := createAccountPermissions(input.Permissions, createdAccount.Id, ref.PermissionAccountRepository)
+	if err != nil {
+		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
+		return accountDomain.Account{}, err
 	}
+	createdAccount.Permissions = permissions
+
 	data := createdAccount.ToDomain()
 
 	go ref.Messaging.Publish(event.AccountCreated, data, "account-service")
 
 	return data, nil
+}
+
+func createAccountPermissions(
+	permissions []AccountPermissionInput,
+	accountId string,
+	accountPermissionRepository accountDomain.AccountPermissionRepository,
+) ([]accountDomain.AccountPermission, error) {
+	var createdPermissions []accountDomain.AccountPermission
+	if len(permissions) > 0 {
+		accountPermissionRepository.DeleteByAccount(accountId)
+		for _, permission := range permissions {
+			p := accountDomain.AccountPermission{
+				AppId:     permission.AppId,
+				Scope:     permission.Scope,
+				AccountId: accountId,
+			}
+			err := accountPermissionRepository.Create(p)
+			if err != nil {
+				message := "Error when creating account permission"
+				log.Println(message, "Detail:", err)
+				return nil, exception.New(exception.DbCommandError, message, err, 500)
+			}
+			createdPermissions = append(createdPermissions, p)
+		}
+	}
+	return createdPermissions, nil
 }
