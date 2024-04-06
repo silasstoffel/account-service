@@ -4,8 +4,9 @@ const (
 	UnknownError      = "UNKNOWN_ERROR"
 	DbCommandError    = "DATABASE_ERROR"
 	HttpClientError   = 400
-	HttpInternalError = 500
+	HttpUnauthorized  = 401
 	HttpNotFoundError = 404
+	HttpInternalError = 500
 )
 
 type Exception struct {

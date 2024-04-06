@@ -41,4 +41,5 @@ const (
 	AccountEmailAlreadyExists = "ACCOUNT_EMAIL_ALREADY_EXISTS"
 	AccountPhoneAlreadyExists = "ACCOUNT_PHONE_ALREADY_EXISTS"
 	AccountNotFound           = "ACCOUNT_NOT_FOUND"
+	InvalidUserOrPassword     = "INVALID_USER_OR_PASSWORD"
 )

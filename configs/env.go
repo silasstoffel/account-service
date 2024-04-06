@@ -29,10 +29,11 @@ type AppDatabase struct {
 }
 
 type Config struct {
-	Env string
-	Aws AwsConfig
-	App AppConfig
-	Db  AppDatabase
+	Env        string
+	AuthSecret string
+	Aws        AwsConfig
+	App        AppConfig
+	Db         AppDatabase
 }
 
 func NewConfigFromEnvVars() *Config {
@@ -51,7 +52,8 @@ func NewConfigFromEnvVars() *Config {
 	}
 
 	return &Config{
-		Env: os.Getenv("ENV"),
+		Env:        os.Getenv("ENV"),
+		AuthSecret: os.Getenv("AUTH_SECRET"),
 		Aws: AwsConfig{
 			Region:                  os.Getenv("AWS_REGION"),
 			Endpoint:                awsEndpoint,

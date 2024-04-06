@@ -8,6 +8,7 @@ import (
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
+	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 )
@@ -85,7 +86,7 @@ func createAccount() gin.HandlerFunc {
 		var input usecase.CreateAccountInput
 
 		if err := c.BindJSON(&input); err != nil {
-			c.JSON(400, gin.H{"code": "INVALID_INPUT_FORMAT", "message": "Invalid input format"})
+			c.JSON(400, helper.InvalidInputFormat())
 			return
 		}
 
@@ -110,7 +111,7 @@ func updateAccount() gin.HandlerFunc {
 		var input usecase.UpdateAccountInput
 
 		if err := c.BindJSON(&input); err != nil {
-			c.JSON(400, gin.H{"code": "INVALID_INPUT_FORMAT", "message": "Invalid input format"})
+			c.JSON(400, helper.InvalidInputFormat())
 			return
 		}
 

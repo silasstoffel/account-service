@@ -27,7 +27,6 @@ func NewAccountRepository(db *sql.DB) *AccountRepository {
 }
 
 func (repository *AccountRepository) Create(account accountDomain.Account) (accountDomain.Account, error) {
-	log.Println(loggerPrefix, "Creating account...")
 	now := time.Now().UTC()
 
 	account.Id = helper.NewULID()
@@ -55,12 +54,10 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 		return account, exception.New(exception.DbCommandError, "Error when creating account", err, exception.HttpInternalError)
 	}
 
-	log.Println(loggerPrefix, "Account created with id", account.Id)
 	return account, nil
 }
 
 func (repository *AccountRepository) FindByEmail(email string) (accountDomain.Account, error) {
-	log.Println(loggerPrefix, "Finding account by email")
 	var account accountDomain.Account
 
 	stmt := `SELECT id, name, last_name, email, phone, created_at, updated_at, active, full_name, COALESCE(hashed_pwd, '')
@@ -76,8 +73,6 @@ func (repository *AccountRepository) FindByEmail(email string) (accountDomain.Ac
 		}
 		return account, exception.New(exception.DbCommandError, "Error when finding account by e-mail", err, exception.HttpInternalError)
 	}
-
-	log.Println(loggerPrefix, "Account found with id", account.Id)
 	return account, nil
 }
 
@@ -105,8 +100,6 @@ func (repository *AccountRepository) FindByPhone(phone string) (accountDomain.Ac
 }
 
 func (repository *AccountRepository) List(input accountDomain.ListAccountInput) ([]accountDomain.Account, error) {
-	log.Println(loggerPrefix, "Listing accounts. Page:", input.Page, "Limit:", input.Limit)
-
 	stmt := `SELECT id, name, last_name, email, phone, created_at, updated_at, active, full_name, COALESCE(hashed_pwd, '')
 	         FROM accounts
 	         LIMIT $1 OFFSET $2`
@@ -136,13 +129,10 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 		}
 		accounts = append(accounts, account)
 	}
-
-	log.Println(loggerPrefix, "Listed accounts", "total", len(accounts))
 	return accounts, nil
 }
 
 func (repository *AccountRepository) FindById(accountId string) (accountDomain.Account, error) {
-	log.Println(loggerPrefix, "Finding account by id", accountId)
 	var account accountDomain.Account
 
 	stmt := `SELECT id, name, last_name, email, phone, created_at, updated_at, active, full_name, COALESCE(hashed_pwd, '')
@@ -158,13 +148,10 @@ func (repository *AccountRepository) FindById(accountId string) (accountDomain.A
 		}
 		return account, exception.New(exception.DbCommandError, "Error when finding account by id.", err, exception.HttpInternalError)
 	}
-
-	log.Println(loggerPrefix, "Account found", account.Id)
 	return account, nil
 }
 
 func (repository *AccountRepository) Update(id string, data accountDomain.Account) (accountDomain.Account, error) {
-	log.Println(loggerPrefix, "Finding account", id)
 	account, err := (repository).FindById(id)
 	if err != nil {
 		log.Println(loggerPrefix, "Error when finding account", id, "Detail", err.Error())
@@ -227,7 +214,6 @@ func (repository *AccountRepository) Update(id string, data accountDomain.Accoun
 		return account, exception.New(exception.DbCommandError, "Error when updating account", err, exception.HttpInternalError)
 	}
 
-	log.Println(loggerPrefix, "Account updated", id)
 	return account, nil
 }
 
