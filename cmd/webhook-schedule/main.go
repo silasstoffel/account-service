@@ -42,7 +42,11 @@ func main() {
 		panic(err)
 	}
 
-	cnx := database.OpenConnection(config)
+	cnx, err := database.OpenConnection(config)
+	if err != nil {
+		log.Fatalf("Failed to open connection to database: %v", err)
+		return
+	}
 	defer cnx.Close()
 
 	snsClient := sqs.NewFromConfig(awsConfig)

@@ -25,9 +25,10 @@ func NewMessagingProducer(topicArn, awsEndpoint string) *MessagingProducer {
 }
 
 func (ref *MessagingProducer) Publish(eventType string, data interface{}, source string) error {
-	log.Println("Publishing event", eventType, "from", source)
+	prefix := "[messaging-service]"
 	awsConfig, err := helper.BuildAwsConfig(ref.AwsEndpoint)
 	if err != nil {
+		log.Println(prefix, "Error when build aws config.", err)
 		return err
 	}
 	snsClient := sns.NewFromConfig(awsConfig)
@@ -35,7 +36,7 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	dataAsJson, err := json.Marshal(data)
 	if err != nil {
 		message := "Error when convert event payload to json."
-		log.Println(message, "Detail", err.Error())
+		log.Println(prefix, message, "Detail", err.Error())
 		return exception.New(event.ErrorConvertMessageToJson, message, err, exception.HttpInternalError)
 	}
 
@@ -67,22 +68,18 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 		TopicArn:          aws.String(ref.TopicArn),
 		MessageAttributes: attrs,
 	}
-	publishOutput, err := snsClient.Publish(context.TODO(), publishInput)
+	_, err = snsClient.Publish(context.TODO(), publishInput)
 	if err != nil {
 		message := "Error to publish event on topic."
-		log.Println(message, "Detail", err.Error())
+		log.Println(prefix, message, "Detail", err.Error())
 		return exception.New(event.ErrorConvertMessageToJson, message, err, exception.HttpInternalError)
 	}
-
-	log.Println(
-		"Publishing event. Id", id, eventType, "from", source,
-		"MessageId", *publishOutput.MessageId,
-	)
 
 	return nil
 }
 
 func (ref *MessagingConsumer) PollingMessages(messageChannel chan<- *sqsType.Message) {
+	prefix := "[messaging-service]"
 	for {
 		result, err := ref.SqsClient.ReceiveMessage(context.TODO(), &sqs.ReceiveMessageInput{
 			QueueUrl:            aws.String(ref.QueueUrl),
@@ -92,7 +89,7 @@ func (ref *MessagingConsumer) PollingMessages(messageChannel chan<- *sqsType.Mes
 		})
 
 		if err != nil {
-			log.Printf("Couldn't get messages from queue %v. Here's why: %v\n", ref.QueueUrl, err)
+			log.Printf(prefix, "Couldn't get messages from queue %v. Here's why: %v\n", ref.QueueUrl, err)
 			continue
 		}
 
@@ -103,13 +100,14 @@ func (ref *MessagingConsumer) PollingMessages(messageChannel chan<- *sqsType.Mes
 }
 
 func (ref *MessagingConsumer) DeleteMessage(receiptHandle string) error {
+	prefix := "[messaging-service]"
 	_, err := ref.SqsClient.DeleteMessage(context.TODO(), &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(ref.QueueUrl),
 		ReceiptHandle: aws.String(receiptHandle),
 	})
 
 	if err != nil {
-		log.Printf("Couldn't delete message from queue %v. Here's why: %v\n", ref.QueueUrl, err)
+		log.Printf(prefix, "Couldn't delete message from queue %v. Here's why: %v\n", ref.QueueUrl, err)
 	}
 
 	return err

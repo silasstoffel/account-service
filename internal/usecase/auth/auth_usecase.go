@@ -61,6 +61,8 @@ func (ref *AuthParams) AuthenticateUseCase(data *AuthInput) (*AuthOutput, error)
 		}
 	}
 
+	go ref.Messaging.Publish(event.AccountLogged, account.ToDomain(), "account-service")
+
 	return &AuthOutput{
 		AccessToken: token.AccessToken,
 		ExpiresIn:   token.ExpiresIn,

@@ -34,7 +34,11 @@ func main() {
 		VisibilityTimeout:   30,
 	}
 
-	cnx := database.OpenConnection(config)
+	cnx, err := database.OpenConnection(config)
+	if err != nil {
+		log.Fatalf("Failed to open connection to database: %v", err)
+		return
+	}
 	defer cnx.Close()
 
 	messagingProducer := messaging.NewMessagingProducer(

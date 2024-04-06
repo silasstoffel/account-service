@@ -7,6 +7,7 @@ const (
 	AccountCreated  = "account.created"
 	AccountUpdated  = "account.updated"
 	AccountInactive = "account.inactive"
+	AccountLogged   = "account.logged"
 	EventCreated    = "event.created"
 )
 

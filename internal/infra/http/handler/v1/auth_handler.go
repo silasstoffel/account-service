@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/silasstoffel/account-service/configs"
+	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
@@ -25,13 +26,16 @@ func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
 		EmittedBy:        "account-service",
 		ExpiresInMinutes: 60,
 	}
+	accountRepository := database.NewAccountRepository(db)
+	permissionAccountRepository := database.NewAccountPermissionRepository(db)
 	authUseCaseParams = &usecase.AuthParams{
-		AccountRepository:           database.NewAccountRepository(db),
-		PermissionAccountRepository: database.NewAccountPermissionRepository(db),
+		AccountRepository:           accountRepository,
+		PermissionAccountRepository: permissionAccountRepository,
 		Messaging:                   messagingProducer,
 		TokenService:                tokenManagerService,
 	}
 	router.POST("/auth", auth())
+	router.GET("/auth/verify", verify(tokenManagerService, accountRepository, permissionAccountRepository))
 }
 
 func auth() gin.HandlerFunc {
@@ -50,5 +54,45 @@ func auth() gin.HandlerFunc {
 		}
 
 		c.JSON(200, auth)
+	}
+}
+
+func verify(
+	tokenManagerService *token.TokenService,
+	accountRepository domain.AccountRepository,
+	accountPermissionRepository domain.AccountPermissionRepository,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if len(authHeader) < 8 {
+			c.JSON(400, helper.InvalidInputFormat())
+			return
+		}
+		token := authHeader[7:]
+		data, err := tokenManagerService.VerifyToken(token)
+		if err != nil {
+			detail := err.(*exception.Exception)
+			c.JSON(detail.HttpStatusCode, detail.ToDomain())
+			return
+		}
+
+		account, err := accountRepository.FindById(data.Sub)
+		if err != nil {
+			detail := err.(*exception.Exception)
+			c.JSON(detail.HttpStatusCode, detail.ToDomain())
+			return
+		}
+
+		var permissions []string
+		items, err := accountPermissionRepository.FindByAccountId(account.Id)
+		if err == nil {
+			for _, p := range items {
+				permissions = append(permissions, p.Scope)
+			}
+		}
+		c.JSON(200, gin.H{
+			"account":     account.Id,
+			"permissions": permissions,
+		})
 	}
 }
