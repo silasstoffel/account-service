@@ -3,6 +3,7 @@ package middleware
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
@@ -47,10 +48,10 @@ func (ref *VerifyTokenMiddlewareParams) VerifyTokenMiddleware(c *gin.Context) {
 		return
 	}
 	var permissions []string
-	for _, p := range items {
-		permissions = append(permissions, p.Scope)
+	for i := range items {
+		permissions = append(permissions, items[i].Scope)
 	}
 	c.Set("accountId", data.Sub)
-	c.Set("accountPermissions", permissions)
+	c.Set("accountPermissions", strings.Join(permissions, ","))
 	c.Next()
 }

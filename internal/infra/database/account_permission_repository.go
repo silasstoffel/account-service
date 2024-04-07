@@ -19,13 +19,12 @@ func NewAccountPermissionRepository(db *sql.DB) *AccountPermissionRepository {
 	}
 }
 
-func (repository *AccountPermissionRepository) Create(data domain.AccountPermission) error {
-	stmt := `INSERT INTO account_permissions(app_id, scope, account_id) VALUES ($1, $2, $3)`
+func (repository *AccountPermissionRepository) Create(data domain.CreateAccountPermissionInput) error {
+	stmt := `INSERT INTO account_permissions(account_id, permission_id) VALUES ($1, $2)`
 	_, err := repository.Db.Exec(
 		stmt,
-		data.AppId,
-		data.Scope,
 		data.AccountId,
+		data.PermissionId,
 	)
 
 	if err != nil {
@@ -51,12 +50,16 @@ func (repository *AccountPermissionRepository) DeleteByAccount(accountId string)
 }
 
 func (repository *AccountPermissionRepository) FindByAccountId(accountId string) ([]domain.AccountPermission, error) {
-	stmt := `SELECT account_id, app_id, scope FROM account_permissions WHERE account_id = $1`
+	stmt := `SELECT
+		ap.account_id, ap.permission_id, ap.created_at, p.scope, p.active
+	FROM account_permissions ap, permissions p
+	WHERE p.id = ap.permission_id
+		AND ap.account_id = $1`
 	rows, err := repository.Db.Query(stmt, accountId)
 	if err != nil {
 		message := "Error when querying account permission"
 		log.Println(message, "Detail:", err)
-		return []domain.AccountPermission{}, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return nil, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
 	}
 	defer rows.Close()
 
@@ -78,14 +81,18 @@ func scanAccountPermissionRow(row interface{}, data *domain.AccountPermission) e
 	case *sql.Row:
 		return r.Scan(
 			&data.AccountId,
-			&data.AppId,
+			&data.PermissionId,
+			&data.CreatedAt,
 			&data.Scope,
+			&data.Active,
 		)
 	case *sql.Rows:
 		return r.Scan(
 			&data.AccountId,
-			&data.AppId,
+			&data.PermissionId,
+			&data.CreatedAt,
 			&data.Scope,
+			&data.Active,
 		)
 	}
 	return exception.New(

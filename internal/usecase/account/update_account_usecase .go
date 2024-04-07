@@ -15,7 +15,7 @@ type UpdateAccountInput struct {
 	Email       string
 	Phone       string
 	Password    string
-	Permissions []AccountPermissionInput
+	Permissions []string
 }
 
 type UpdateAccount struct {

@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"log"
 
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
@@ -10,17 +9,13 @@ import (
 	"github.com/silasstoffel/account-service/internal/service"
 )
 
-type AccountPermissionInput struct {
-	AppId string `json:"appId"`
-	Scope string `json:"scope"`
-}
 type CreateAccountInput struct {
 	Name        string
 	LastName    string
 	Email       string
 	Phone       string
 	Password    string
-	Permissions []AccountPermissionInput
+	Permissions []string
 }
 
 type CreateAccount struct {
@@ -80,8 +75,8 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 		Phone:     input.Phone,
 		HashedPwd: pwd,
 		Active:    true,
-		FullName:  fmt.Sprintf("%s %s", input.Name, input.LastName),
 	}
+	account.BuildFullName()
 
 	createdAccount, err := ref.AccountRepository.Create(account)
 
@@ -105,18 +100,18 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 }
 
 func createAccountPermissions(
-	permissions []AccountPermissionInput,
+	permissions []string,
 	accountId string,
 	accountPermissionRepository accountDomain.AccountPermissionRepository,
 ) ([]accountDomain.AccountPermission, error) {
 	var createdPermissions []accountDomain.AccountPermission
+	var err error
 	if len(permissions) > 0 {
 		accountPermissionRepository.DeleteByAccount(accountId)
 		for _, permission := range permissions {
-			p := accountDomain.AccountPermission{
-				AppId:     permission.AppId,
-				Scope:     permission.Scope,
-				AccountId: accountId,
+			p := accountDomain.CreateAccountPermissionInput{
+				AccountId:    accountId,
+				PermissionId: permission,
 			}
 			err := accountPermissionRepository.Create(p)
 			if err != nil {
@@ -124,7 +119,12 @@ func createAccountPermissions(
 				log.Println(message, "Detail:", err)
 				return nil, exception.New(exception.DbCommandError, message, err, 500)
 			}
-			createdPermissions = append(createdPermissions, p)
+		}
+		createdPermissions, err = accountPermissionRepository.FindByAccountId(accountId)
+		if err != nil {
+			message := "Error when querying account permission"
+			log.Println(message, "Detail:", err)
+			return nil, exception.New(exception.DbCommandError, message, err, 500)
 		}
 	}
 	return createdPermissions, nil

@@ -13,6 +13,12 @@ CREATE TABLE IF NOT EXISTS accounts(
 
 CREATE INDEX IF NOT EXISTS idx_account_email ON accounts(email);
 
+-- Password: super.user
+insert into accounts
+    (id, "name", last_name, full_name, email, phone, hashed_pwd)
+values
+    ('01HTXANJXPMYPW89E6ZX0NFC63', 'Super', 'User', 'Super user', 'super.user@gmail.com', '+5511999999999', '$2a$15$ul/Uy2i4BhomUvDZFqPX4O7cXT3f06UEn3N9jmk3UsxTyCM.dSMfS');
+
 CREATE TABLE IF NOT EXISTS events (
     id VARCHAR(40) PRIMARY KEY,
     data_id VARCHAR(40) NULL,
@@ -60,6 +66,15 @@ CREATE TABLE IF NOT EXISTS permissions(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+insert into permissions (id, scope) values ('01HTXA4GGBDZY3S1E7SNSRQ6MG', 'account-service:*');
+insert into permissions (id, scope) values ('01HTXA59W476S0MHK8MSD8ZKBC', 'account-service:create-account');
+insert into permissions (id, scope) values ('01HTXA5GGK0WV9PDZVCN2C1N5K', 'account-service:update-account');
+insert into permissions (id, scope) values ('01HTXA5QBA26MNW63435XS25PK', 'account-service:list-accounts');
+insert into permissions (id, scope) values ('01HTXA5X7CRCSMGH1QPVDR86EM', 'account-service:get-account');
+insert into permissions (id, scope) values ('01HTXA84W1SYGA35VVV5SYQZXA', 'account-service:disable-account');
+insert into permissions (id, scope) values ('01HTXA90ZK1XZKWX2RGMB05CAJ', 'account-service:enable-account');
+
+
 CREATE TABLE IF NOT EXISTS account_permissions (
     permission_id VARCHAR(36),
     account_id VARCHAR(36),
@@ -69,3 +84,4 @@ CREATE TABLE IF NOT EXISTS account_permissions (
     PRIMARY KEY (account_id, permission_id)
 );
 
+insert into account_permissions (account_id, permission_id) values ('01HTXANJXPMYPW89E6ZX0NFC63', '01HTXA4GGBDZY3S1E7SNSRQ6MG');
