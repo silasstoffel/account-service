@@ -20,7 +20,7 @@ func BuildRouter(config *configs.Config, db *sql.DB) *gin.Engine {
 
 	v1handler.GetAuthHandler(route, config, db)
 
-	tokenManagerService := token.TokenService{
+	tokenManagerService := &token.TokenService{
 		Secret:           config.AuthSecret,
 		EmittedBy:        "account-service",
 		ExpiresInMinutes: 60,

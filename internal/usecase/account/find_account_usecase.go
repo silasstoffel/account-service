@@ -8,7 +8,7 @@ import (
 
 type FindAccount struct {
 	AccountRepository           accountDomain.AccountRepository
-	PermissionAccountRepository accountDomain.AccountPermissionRepository
+	AccountPermissionRepository accountDomain.AccountPermissionRepository
 }
 
 func (ref *FindAccount) FindAccountUseCase(id string) (accountDomain.Account, error) {
@@ -19,7 +19,7 @@ func (ref *FindAccount) FindAccountUseCase(id string) (accountDomain.Account, er
 		return accountDomain.Account{}, err
 	}
 
-	p, _ := ref.PermissionAccountRepository.FindByAccountId(account.Id)
+	p, _ := ref.AccountPermissionRepository.FindByAccountId(account.Id)
 	account.Permissions = p
 
 	return account, nil

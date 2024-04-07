@@ -13,7 +13,7 @@ import (
 
 type AuthParams struct {
 	AccountRepository           domain.AccountRepository
-	PermissionAccountRepository domain.AccountPermissionRepository
+	AccountPermissionRepository domain.AccountPermissionRepository
 	Messaging                   event.EventProducer
 	TokenService                auth.TokenManagerService
 }
@@ -53,7 +53,7 @@ func (ref *AuthParams) AuthenticateUseCase(data *AuthInput) (*AuthOutput, error)
 		return nil, exception.New(exception.UnknownError, message, err, exception.HttpInternalError)
 	}
 
-	result, err := ref.PermissionAccountRepository.FindByAccountId(account.Id)
+	result, err := ref.AccountPermissionRepository.FindByAccountId(account.Id)
 	var permissions []string
 	if err == nil {
 		for _, p := range result {

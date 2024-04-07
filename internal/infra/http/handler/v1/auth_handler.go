@@ -9,6 +9,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
+	"github.com/silasstoffel/account-service/internal/infra/http/middleware"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
 	"github.com/silasstoffel/account-service/internal/infra/service/token"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/auth"
@@ -27,15 +28,16 @@ func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
 		ExpiresInMinutes: 60,
 	}
 	accountRepository := database.NewAccountRepository(db)
-	permissionAccountRepository := database.NewAccountPermissionRepository(db)
+	accountPermissionRepository := database.NewAccountPermissionRepository(db)
 	authUseCaseParams = &usecase.AuthParams{
 		AccountRepository:           accountRepository,
-		PermissionAccountRepository: permissionAccountRepository,
+		AccountPermissionRepository: accountPermissionRepository,
 		Messaging:                   messagingProducer,
 		TokenService:                tokenManagerService,
 	}
+	verifyToken := middleware.NewVerifyTokenMiddleware(tokenManagerService, accountPermissionRepository)
 	router.POST("/auth", auth())
-	router.GET("/auth/verify", verify(tokenManagerService, accountRepository, permissionAccountRepository))
+	router.GET("/auth/verify", verifyToken.VerifyTokenMiddleware, verify(accountRepository, accountPermissionRepository))
 }
 
 func auth() gin.HandlerFunc {
@@ -58,25 +60,12 @@ func auth() gin.HandlerFunc {
 }
 
 func verify(
-	tokenManagerService *token.TokenService,
 	accountRepository domain.AccountRepository,
 	accountPermissionRepository domain.AccountPermissionRepository,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if len(authHeader) < 8 {
-			c.JSON(400, helper.InvalidInputFormat())
-			return
-		}
-		token := authHeader[7:]
-		data, err := tokenManagerService.VerifyToken(token)
-		if err != nil {
-			detail := err.(*exception.Exception)
-			c.JSON(detail.HttpStatusCode, detail.ToDomain())
-			return
-		}
-
-		account, err := accountRepository.FindById(data.Sub)
+		accountId := c.GetString("accountId")
+		account, err := accountRepository.FindById(accountId)
 		if err != nil {
 			detail := err.(*exception.Exception)
 			c.JSON(detail.HttpStatusCode, detail.ToDomain())

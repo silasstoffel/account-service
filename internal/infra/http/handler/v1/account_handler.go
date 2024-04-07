@@ -45,7 +45,7 @@ func listAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		listAccount := usecase.ListAccount{
 			AccountRepository:           accountRepository,
-			PermissionAccountRepository: accountPermissionRepository,
+			AccountPermissionRepository: accountPermissionRepository,
 		}
 		input := domain.ListAccountInput{Page: 1, Limit: 12}
 		accounts, err := listAccount.ListAccountUseCase(input)
@@ -63,7 +63,7 @@ func getAccount() gin.HandlerFunc {
 		id := c.Param("id")
 		findAccount := usecase.FindAccount{
 			AccountRepository:           accountRepository,
-			PermissionAccountRepository: accountPermissionRepository,
+			AccountPermissionRepository: accountPermissionRepository,
 		}
 		account, err := findAccount.FindAccountUseCase(id)
 
@@ -87,7 +87,7 @@ func createAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		createAccount := usecase.CreateAccount{
 			AccountRepository:           accountRepository,
-			PermissionAccountRepository: accountPermissionRepository,
+			AccountPermissionRepository: accountPermissionRepository,
 			Messaging:                   messagingProducer,
 		}
 		var input usecase.CreateAccountInput
@@ -113,7 +113,7 @@ func updateAccount() gin.HandlerFunc {
 		updateAccountInstance := usecase.UpdateAccount{
 			AccountRepository:           accountRepository,
 			Messaging:                   messagingProducer,
-			PermissionAccountRepository: accountPermissionRepository,
+			AccountPermissionRepository: accountPermissionRepository,
 		}
 		var input usecase.UpdateAccountInput
 

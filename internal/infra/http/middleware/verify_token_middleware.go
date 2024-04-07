@@ -11,12 +11,12 @@ import (
 )
 
 type VerifyTokenMiddlewareParams struct {
-	TokenManagerService         token.TokenService
+	TokenManagerService         *token.TokenService
 	AccountPermissionRepository domain.AccountPermissionRepository
 }
 
 func NewVerifyTokenMiddleware(
-	tokenManagerService token.TokenService,
+	tokenManagerService *token.TokenService,
 	accountPermissionRepository domain.AccountPermissionRepository,
 ) *VerifyTokenMiddlewareParams {
 	return &VerifyTokenMiddlewareParams{

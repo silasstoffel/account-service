@@ -21,7 +21,7 @@ type UpdateAccountInput struct {
 type UpdateAccount struct {
 	AccountRepository           accountDomain.AccountRepository
 	Messaging                   event.EventProducer
-	PermissionAccountRepository accountDomain.AccountPermissionRepository
+	AccountPermissionRepository accountDomain.AccountPermissionRepository
 }
 
 func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string) error {
@@ -92,7 +92,7 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 		return accountDomain.Account{}, err
 	}
 
-	permissions, err := createAccountPermissions(input.Permissions, updatedAccount.Id, ref.PermissionAccountRepository)
+	permissions, err := createAccountPermissions(input.Permissions, updatedAccount.Id, ref.AccountPermissionRepository)
 	if err != nil {
 		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
 		return accountDomain.Account{}, err

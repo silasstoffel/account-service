@@ -9,7 +9,7 @@ import (
 
 type ListAccount struct {
 	AccountRepository           domain.AccountRepository
-	PermissionAccountRepository accountDomain.AccountPermissionRepository
+	AccountPermissionRepository accountDomain.AccountPermissionRepository
 }
 
 func (ref *ListAccount) ListAccountUseCase(input domain.ListAccountInput) ([]domain.Account, error) {
@@ -23,7 +23,7 @@ func (ref *ListAccount) ListAccountUseCase(input domain.ListAccountInput) ([]dom
 	}
 
 	for key, _ := range accounts {
-		p, err := ref.PermissionAccountRepository.FindByAccountId(accounts[key].Id)
+		p, err := ref.AccountPermissionRepository.FindByAccountId(accounts[key].Id)
 		if err != nil {
 			log.Println(listLoggerPrefix, "Error when listing account permissions", err)
 			return []domain.Account{}, err
