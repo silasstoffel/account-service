@@ -9,6 +9,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
+	"github.com/silasstoffel/account-service/internal/infra/http/middleware"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 )
@@ -26,12 +27,18 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 		config.Aws.Endpoint,
 	)
 
+	permissions := make(map[string]string)
+	permissions["GET|/v1/accounts/"] = "account-service:list-accounts,account-service:*"
+	permissions["POST|/v1/accounts/"] = "account-service:create-account,account-service:*"
+	permissions["PUT|/v1/accounts/:id"] = "account-service:update-account,account-service:*"
+	permissions["GET|/v1/accounts/:id"] = "account-service:get-account,account-service:*"
+	authorizer := middleware.NewAuthorizerMiddleware(permissions)
+
 	group := router.Group("/accounts")
-	group.GET("/", listAccount())
-	group.GET("/:id", getAccount())
-	group.POST("/", createAccount())
-	group.PUT("/:id", updateAccount())
-	group.PATCH("/:id/disabled", createAccount())
+	group.GET("/", authorizer.AuthorizerMiddleware, listAccount())
+	group.GET("/:id", authorizer.AuthorizerMiddleware, getAccount())
+	group.POST("/", authorizer.AuthorizerMiddleware, createAccount())
+	group.PUT("/:id", authorizer.AuthorizerMiddleware, updateAccount())
 }
 
 func listAccount() gin.HandlerFunc {

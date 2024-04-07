@@ -5,11 +5,23 @@ type ListAccountInput struct {
 	Limit int
 }
 
-type AccountRepository interface {
-	List(input ListAccountInput) ([]Account, error)
+type ReadOneAccountRepository interface {
 	FindById(accountId string) (Account, error)
-	Create(account Account) (Account, error)
+}
+
+type ReadAccountRepository interface {
+	ReadOneAccountRepository
 	FindByEmail(email string) (Account, error)
 	FindByPhone(phone string) (Account, error)
+	List(input ListAccountInput) ([]Account, error)
+}
+
+type WriteAccountRepository interface {
+	Create(account Account) (Account, error)
 	Update(id string, data Account) (Account, error)
+}
+
+type AccountRepository interface {
+	WriteAccountRepository
+	ReadAccountRepository
 }
