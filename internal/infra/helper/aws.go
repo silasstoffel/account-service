@@ -25,6 +25,12 @@ func BuildAwsConfig(awsEndpoint string) (cfg aws.Config, err error) {
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(awsRegion),
 		config.WithEndpointResolverWithOptions(customResolver),
+		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
+			return aws.Credentials{
+				AccessKeyID:     "localstack",
+				SecretAccessKey: "localstack",
+			}, nil
+		})),
 	)
 
 	if err != nil {
