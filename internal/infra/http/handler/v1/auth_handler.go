@@ -76,7 +76,9 @@ func verify(
 		items, err := accountPermissionRepository.FindByAccountId(account.Id)
 		if err == nil {
 			for _, p := range items {
-				permissions = append(permissions, p.Scope)
+				if p.Active {
+					permissions = append(permissions, p.Scope)
+				}
 			}
 		}
 		c.JSON(200, gin.H{

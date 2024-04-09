@@ -49,7 +49,9 @@ func (ref *VerifyTokenMiddlewareParams) VerifyTokenMiddleware(c *gin.Context) {
 	}
 	var permissions []string
 	for i := range items {
-		permissions = append(permissions, items[i].Scope)
+		if items[i].Active {
+			permissions = append(permissions, items[i].Scope)
+		}
 	}
 	c.Set("accountId", data.Sub)
 	c.Set("accountPermissions", strings.Join(permissions, ","))
