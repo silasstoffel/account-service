@@ -51,6 +51,7 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 	)
 
 	if err != nil {
+		log.Println(loggerPrefix, "Error when creating account", err.Error())
 		return account, exception.New(exception.DbCommandError, "Error when creating account", err, exception.HttpInternalError)
 	}
 

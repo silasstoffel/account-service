@@ -44,13 +44,14 @@ func (ref *TokenService) CreateToken(data string) (*auth.CreateTokenOutput, erro
 }
 
 func (ref *TokenService) VerifyToken(token string) (*auth.VerifyTokenOutput, error) {
+	lp := "[token-service][verify-token]"
 	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(ref.Secret), nil
 	})
 
 	if err != nil {
 		message := "Error when parse token"
-		log.Println(message, err)
+		log.Println(lp, message, err.Error())
 		return nil, exception.New(auth.ErrorParseToken, message, err, exception.HttpUnauthorized)
 	}
 
@@ -62,6 +63,7 @@ func (ref *TokenService) VerifyToken(token string) (*auth.VerifyTokenOutput, err
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
 		message := "Error when convert token"
+		log.Println(lp, message)
 		return nil, exception.New(auth.ErrorConvertToken, message, err, exception.HttpUnauthorized)
 	}
 

@@ -5,9 +5,11 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/silasstoffel/account-service/internal/domain/webhook"
 	"github.com/silasstoffel/account-service/internal/exception"
+	"github.com/silasstoffel/account-service/internal/infra/helper"
 )
 
 type SubscriptionRepository struct {
@@ -21,7 +23,6 @@ func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
 }
 
 func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]webhook.Subscription, error) {
-	log.Println(loggerPrefix, "Finding subscriptions by event type")
 	var subscriptions []webhook.Subscription
 
 	like := eventType
@@ -30,7 +31,7 @@ func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]we
 		like = before + ".*"
 	}
 
-	stmt := `SELECT id, event_type, url, created_at, updated_at FROM webhook_subscriptions WHERE event_type IN($1, $2)`
+	stmt := `SELECT id, event_type, url, created_at, updated_at, external_id, active FROM webhook_subscriptions WHERE event_type IN($1, $2)`
 	rows, err := repository.Db.Query(stmt, eventType, like)
 	if err != nil {
 		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
@@ -49,9 +50,38 @@ func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]we
 		subscriptions = append(subscriptions, subscription)
 	}
 
-	log.Println(loggerPrefix, "Finding subscription by event_type", eventType)
-
 	return subscriptions, nil
+}
+
+func (repository *SubscriptionRepository) Create(subscription webhook.CreateSubscriptionInput) (*webhook.Subscription, error) {
+	lp := "[subscription-repository][create]"
+	stmt := `INSERT INTO webhook_subscriptions (id, event_type, url, external_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)`
+
+	subscription.Id = helper.NewULID()
+	now := time.Now().UTC()
+	_, err := repository.Db.Exec(stmt,
+		subscription.Id,
+		subscription.EventType,
+		subscription.Url,
+		subscription.ExternalId,
+		now,
+		now,
+	)
+
+	if err != nil {
+		log.Println(lp, "Error when creating webhook subscription", err.Error())
+		return nil, exception.New(exception.UnknownError, "Error when creating webhook subscription", err, exception.HttpInternalError)
+	}
+
+	return &webhook.Subscription{
+		Id:         subscription.Id,
+		EventType:  subscription.EventType,
+		Url:        subscription.Url,
+		CreatedAt:  now,
+		UpdatedAt:  now,
+		ExternalId: subscription.ExternalId,
+		Active:     true,
+	}, nil
 }
 
 func scanSubscription(row interface{}, subscription *webhook.Subscription) error {
@@ -63,6 +93,8 @@ func scanSubscription(row interface{}, subscription *webhook.Subscription) error
 			&subscription.Url,
 			&subscription.CreatedAt,
 			&subscription.UpdatedAt,
+			&subscription.ExternalId,
+			&subscription.Active,
 		)
 	case *sql.Rows:
 		return r.Scan(
@@ -71,6 +103,8 @@ func scanSubscription(row interface{}, subscription *webhook.Subscription) error
 			&subscription.Url,
 			&subscription.CreatedAt,
 			&subscription.UpdatedAt,
+			&subscription.ExternalId,
+			&subscription.Active,
 		)
 	}
 

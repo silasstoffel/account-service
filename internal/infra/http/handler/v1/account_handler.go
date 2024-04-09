@@ -100,7 +100,7 @@ func createAccount() gin.HandlerFunc {
 		account, err := createAccount.CreateAccountUseCase(input)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			c.JSON(400, detail.ToDomain())
+			c.JSON(detail.HttpStatusCode, detail.ToDomain())
 			return
 		}
 

@@ -43,7 +43,7 @@ func (ref *VerifyTokenMiddlewareParams) VerifyTokenMiddleware(c *gin.Context) {
 
 	items, err := ref.AccountPermissionRepository.FindByAccountId(data.Sub)
 	if err != nil {
-		log.Println(lp, "failure to get account permissions", err)
+		log.Println(lp, "failure to get account permissions", err.Error())
 		c.AbortWithStatusJSON(http.StatusForbidden, response)
 		return
 	}

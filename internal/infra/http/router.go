@@ -33,6 +33,7 @@ func BuildRouter(config *configs.Config, db *sql.DB) *gin.Engine {
 	v1Group := route.Group("/v1")
 	v1Group.Use(verifyToken.VerifyTokenMiddleware)
 	v1handler.GetAccountHandler(v1Group, config, db)
+	v1handler.GetWebHookSubscriptionHandler(v1Group, config, db)
 
 	return route
 }
