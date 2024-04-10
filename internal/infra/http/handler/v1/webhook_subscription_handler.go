@@ -19,11 +19,7 @@ var WebHookSubscriptionUse usecase.WebHookSubscriptionUseCaseParams
 
 func GetWebHookSubscriptionHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
 	webhookSubscriptionRepository = database.NewSubscriptionRepository(db)
-	messagingProducer = messaging.NewMessagingProducer(
-		config.Aws.AccountServiceTopicArn,
-		config.Aws.Endpoint,
-		config,
-	)
+	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
 	WebHookSubscriptionUse = usecase.WebHookSubscriptionUseCaseParams{
 		Messaging:                     messagingProducer,
 		WebhookSubscriptionRepository: webhookSubscriptionRepository,

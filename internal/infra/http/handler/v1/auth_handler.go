@@ -18,11 +18,7 @@ import (
 var authUseCaseParams *usecase.AuthParams
 
 func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
-	messagingProducer := messaging.NewMessagingProducer(
-		config.Aws.AccountServiceTopicArn,
-		config.Aws.Endpoint,
-		config,
-	)
+	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
 	tokenManagerService := &token.TokenService{
 		Secret:           config.AuthSecret,
 		EmittedBy:        "account-service",

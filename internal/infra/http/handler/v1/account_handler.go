@@ -22,11 +22,7 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 	accountRepository = database.NewAccountRepository(db)
 	accountPermissionRepository = database.NewAccountPermissionRepository(db)
 
-	messagingProducer = messaging.NewMessagingProducer(
-		config.Aws.AccountServiceTopicArn,
-		config.Aws.Endpoint,
-		config,
-	)
+	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
 
 	permissions := make(map[string]string)
 	permissions["GET|/v1/accounts/"] = "account-service:list-accounts,account-service:*"

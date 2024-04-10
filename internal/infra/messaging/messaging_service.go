@@ -26,6 +26,10 @@ func NewMessagingProducer(topicArn, awsEndpoint string, config *appConfig.Config
 	}
 }
 
+func NewDefaultMessagingProducerFromConfig(config *appConfig.Config) *MessagingProducer {
+	return NewMessagingProducer(config.Aws.AccountServiceTopicArn, config.Aws.Endpoint, config)
+}
+
 func (ref *MessagingProducer) Publish(eventType string, data interface{}, source string) error {
 	prefix := "[messaging-service]"
 	awsConfig, err := helper.BuildAwsConfig(ref.Config)

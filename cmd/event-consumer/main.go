@@ -41,12 +41,7 @@ func main() {
 	}
 	defer cnx.Close()
 
-	messagingProducer := messaging.NewMessagingProducer(
-		config.Aws.AccountServiceTopicArn,
-		config.Aws.Endpoint,
-		config,
-	)
-
+	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
 	eventRepository := database.NewEventRepository(cnx)
 
 	createEventUseCase := usecase.CreateEventUseCase{
