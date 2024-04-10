@@ -1,6 +1,9 @@
 package messaging
 
-import "github.com/aws/aws-sdk-go-v2/service/sqs"
+import (
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/silasstoffel/account-service/configs"
+)
 
 type MessageSchema struct {
 	Message           string
@@ -11,6 +14,7 @@ type MessageSchema struct {
 type MessagingProducer struct {
 	TopicArn    string
 	AwsEndpoint string
+	Config      *configs.Config
 }
 
 type MessagingConsumer struct {

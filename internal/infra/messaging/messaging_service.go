@@ -12,21 +12,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqsType "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	appConfig "github.com/silasstoffel/account-service/configs"
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 )
 
-func NewMessagingProducer(topicArn, awsEndpoint string) *MessagingProducer {
+func NewMessagingProducer(topicArn, awsEndpoint string, config *appConfig.Config) *MessagingProducer {
 	return &MessagingProducer{
 		TopicArn:    topicArn,
 		AwsEndpoint: awsEndpoint,
+		Config:      config,
 	}
 }
 
 func (ref *MessagingProducer) Publish(eventType string, data interface{}, source string) error {
 	prefix := "[messaging-service]"
-	awsConfig, err := helper.BuildAwsConfig(ref.AwsEndpoint)
+	awsConfig, err := helper.BuildAwsConfig(ref.Config)
 	if err != nil {
 		log.Println(prefix, "Error when build aws config.", err)
 		return err

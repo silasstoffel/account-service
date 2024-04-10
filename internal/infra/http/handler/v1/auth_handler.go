@@ -21,6 +21,7 @@ func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
 	messagingProducer := messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,
 		config.Aws.Endpoint,
+		config,
 	)
 	tokenManagerService := &token.TokenService{
 		Secret:           config.AuthSecret,

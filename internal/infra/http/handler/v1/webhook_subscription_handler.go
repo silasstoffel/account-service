@@ -22,6 +22,7 @@ func GetWebHookSubscriptionHandler(router *gin.RouterGroup, config *configs.Conf
 	messagingProducer = messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,
 		config.Aws.Endpoint,
+		config,
 	)
 	WebHookSubscriptionUse = usecase.WebHookSubscriptionUseCaseParams{
 		Messaging:                     messagingProducer,

@@ -43,7 +43,7 @@ var transactionRepository *database.WebhookTransactionRepository
 
 func main() {
 	config := configs.NewConfigFromEnvVars()
-	awsConfig, err := helper.BuildAwsConfig(config.Aws.Endpoint)
+	awsConfig, err := helper.BuildAwsConfig(config)
 	if err != nil {
 		log.Println("Error creating aws config", err)
 		panic(err)

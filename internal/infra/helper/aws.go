@@ -2,15 +2,40 @@ package helper
 
 import (
 	"context"
+	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/silasstoffel/account-service/internal/event"
+	appConfig "github.com/silasstoffel/account-service/configs"
 	"github.com/silasstoffel/account-service/internal/exception"
 )
 
-func BuildAwsConfig(awsEndpoint string) (cfg aws.Config, err error) {
-	awsRegion := "us-east-1"
+func BuildAwsConfig(app *appConfig.Config) (cfg aws.Config, er error) {
+	var awsCfg aws.Config
+	var err error
+
+	if app.Env == "development" {
+		awsCfg, err = buildDevEnvironment(app)
+	} else {
+		awsRegion := app.Aws.Region
+		awsCfg, err = config.LoadDefaultConfig(context.TODO(),
+			config.WithRegion(awsRegion),
+		)
+	}
+
+	if err != nil {
+		message := "Error when creating AWS client"
+		log.Println(message, err.Error())
+		return aws.Config{}, exception.New("ERROR_CREATING_AWS_CLIENT", message, err, exception.HttpInternalError)
+	}
+
+	return awsCfg, nil
+}
+
+func buildDevEnvironment(app *appConfig.Config) (cfg aws.Config, err error) {
+	awsRegion := app.Aws.Region
+	awsEndpoint := app.Aws.Endpoint
+
 	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		if awsEndpoint != "" {
 			return aws.Endpoint{
@@ -34,7 +59,7 @@ func BuildAwsConfig(awsEndpoint string) (cfg aws.Config, err error) {
 	)
 
 	if err != nil {
-		return aws.Config{}, exception.New(event.ErrorInstanceEventBus, "Error creating event bus instance", err, exception.HttpInternalError)
+		return aws.Config{}, err
 	}
 
 	return awsCfg, nil

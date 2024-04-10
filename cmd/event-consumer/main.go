@@ -19,7 +19,7 @@ var message event.Event
 func main() {
 	log.Println("Starting events consumer")
 	config := configs.NewConfigFromEnvVars()
-	awsConfig, err := helper.BuildAwsConfig(config.Aws.Endpoint)
+	awsConfig, err := helper.BuildAwsConfig(config)
 	if err != nil {
 		log.Println("Error creating aws config", err)
 		panic(err)
@@ -41,10 +41,17 @@ func main() {
 	}
 	defer cnx.Close()
 
+	awsConfig, err = helper.BuildAwsConfig(config)
+	if err != nil {
+		log.Println("Error creating aws config client", err)
+		panic(err)
+	}
 	messagingProducer := messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,
 		config.Aws.Endpoint,
+		config,
 	)
+
 	eventRepository := database.NewEventRepository(cnx)
 
 	createEventUseCase := usecase.CreateEventUseCase{

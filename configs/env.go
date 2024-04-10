@@ -18,6 +18,7 @@ type AwsConfig struct {
 type AppConfig struct {
 	ApiPort string
 	ApiHost string
+	AppName string
 }
 
 type AppDatabase struct {
@@ -63,6 +64,7 @@ func NewConfigFromEnvVars() *Config {
 			WebhookScheduleQueueUrl: os.Getenv("WEBHOOK_SCHEDULE_QUEUE_URL"),
 		},
 		App: AppConfig{
+			AppName: os.Getenv("APP_NAME"),
 			ApiPort: apiPort,
 			ApiHost: os.Getenv("API_HOST"),
 		},

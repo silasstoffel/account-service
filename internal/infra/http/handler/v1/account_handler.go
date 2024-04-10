@@ -25,6 +25,7 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 	messagingProducer = messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,
 		config.Aws.Endpoint,
+		config,
 	)
 
 	permissions := make(map[string]string)
