@@ -41,11 +41,6 @@ func main() {
 	}
 	defer cnx.Close()
 
-	awsConfig, err = helper.BuildAwsConfig(config)
-	if err != nil {
-		log.Println("Error creating aws config client", err)
-		panic(err)
-	}
 	messagingProducer := messaging.NewMessagingProducer(
 		config.Aws.AccountServiceTopicArn,
 		config.Aws.Endpoint,
