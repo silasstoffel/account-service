@@ -19,9 +19,6 @@ func NewEventRepository(db *sql.DB) *EventRepository {
 }
 
 func (repository *EventRepository) Create(event event.Event) error {
-	loggerPrefix := "[event-repository]"
-	log.Println(loggerPrefix, "Creating event...")
-
 	stmt := `INSERT INTO events (id, occurred_at, "type", "source", "data", data_id) VALUES ($1, $2, $3, $4, $5, $6)`
 	_, err := repository.Db.Exec(
 		stmt,
@@ -34,10 +31,10 @@ func (repository *EventRepository) Create(event event.Event) error {
 	)
 
 	if err != nil {
+		loggerPrefix := "[event-repository]"
 		log.Println(loggerPrefix, "Error when create event", err.Error())
 		return exception.New(exception.DbCommandError, "Error when creating event", err, exception.HttpInternalError)
 	}
 
-	log.Println(loggerPrefix, "Event created with id", event.Id)
 	return nil
 }

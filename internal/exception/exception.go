@@ -3,6 +3,7 @@ package exception
 const (
 	UnknownError      = "UNKNOWN_ERROR"
 	DbCommandError    = "DATABASE_ERROR"
+	EntityNotFound    = "ENTITY_NOT_FOUND"
 	HttpClientError   = 400
 	HttpUnauthorized  = 401
 	HttpNotFoundError = 404

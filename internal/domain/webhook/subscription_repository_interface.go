@@ -7,7 +7,24 @@ type CreateSubscriptionInput struct {
 	ExternalId string `json:"externalId,omitempty"`
 }
 
-type SubscriptionRepository interface {
+type UpdateSubscriptionInput struct {
+	EventType  string `json:"eventType"`
+	Url        string `json:"url"`
+	ExternalId string `json:"externalId,omitempty"`
+	Active     bool   `json:"active,omitempty"`
+}
+
+type SubscriptionReadRepository interface {
 	GetByEventType(eventType string) ([]Subscription, error)
+	FindById(id string) (*Subscription, error)
+}
+
+type SubscriptionWriteRepository interface {
 	Create(subscription CreateSubscriptionInput) (*Subscription, error)
+	Update(id string, data UpdateSubscriptionInput) (*Subscription, error)
+}
+
+type SubscriptionRepository interface {
+	SubscriptionReadRepository
+	SubscriptionWriteRepository
 }

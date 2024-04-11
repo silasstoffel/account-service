@@ -11,3 +11,8 @@ type Subscription struct {
 	ExternalId string    `json:"externalId,omitempty"`
 	Active     bool      `json:"active"`
 }
+
+// Error codes
+const (
+	SubscriptionNotFound = "SUBSCRIPTION_NOT_FOUND"
+)

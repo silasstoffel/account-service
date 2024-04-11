@@ -22,6 +22,16 @@ func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
 	}
 }
 
+func buildSelectCommand(where string, orderBy string) string {
+	if where == "" {
+		where = "1=1"
+	}
+	if orderBy == "" {
+		orderBy = "1"
+	}
+	return `SELECT id, event_type, url, created_at, updated_at, external_id, active FROM webhook_subscriptions WHERE ` + where + ` ORDER BY ` + orderBy
+}
+
 func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]webhook.Subscription, error) {
 	var subscriptions []webhook.Subscription
 
@@ -31,7 +41,7 @@ func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]we
 		like = before + ".*"
 	}
 
-	stmt := `SELECT id, event_type, url, created_at, updated_at, external_id, active FROM webhook_subscriptions WHERE event_type IN($1, $2)`
+	stmt := buildSelectCommand("event_type IN($1, $2)", "id")
 	rows, err := repository.Db.Query(stmt, eventType, like)
 	if err != nil {
 		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
@@ -81,6 +91,56 @@ func (repository *SubscriptionRepository) Create(subscription webhook.CreateSubs
 		UpdatedAt:  now,
 		ExternalId: subscription.ExternalId,
 		Active:     true,
+	}, nil
+}
+
+func (repository *SubscriptionRepository) FindById(id string) (*webhook.Subscription, error) {
+	stmt := buildSelectCommand("id = $1", "id")
+
+	var subscription webhook.Subscription
+	row := repository.Db.QueryRow(stmt, id)
+
+	if err := scanSubscription(row, &subscription); err != nil {
+		lp := "[subscription-repository][get-by-id]"
+		message := "Error when finding subscription"
+		if err == sql.ErrNoRows {
+			message := "Subscription not found"
+			log.Println(lp, message, err.Error())
+			return nil, exception.New(webhook.SubscriptionNotFound, message, nil, exception.HttpNotFoundError)
+		}
+		log.Println(lp, message, err.Error())
+		return nil, exception.New(exception.UnknownError, message, err, exception.HttpInternalError)
+	}
+
+	return &subscription, nil
+}
+
+func (repository *SubscriptionRepository) Update(id string, data webhook.UpdateSubscriptionInput) (*webhook.Subscription, error) {
+	stmt := `UPDATE webhook_subscriptions SET event_type = $1, url = $2, external_id = $3, updated_at = $4, active = $5 WHERE id = $6`
+
+	now := time.Now().UTC()
+	_, err := repository.Db.Exec(stmt,
+		data.EventType,
+		data.Url,
+		data.ExternalId,
+		now,
+		data.Active,
+		id,
+	)
+
+	if err != nil {
+		lp := "[subscription-repository][update]"
+		log.Println(lp, "Error when updating webhook subscription", err.Error())
+		return nil, exception.New(exception.UnknownError, "Error when updating webhook subscription", err, exception.HttpInternalError)
+	}
+
+	return &webhook.Subscription{
+		Id:         id,
+		EventType:  data.EventType,
+		Url:        data.Url,
+		UpdatedAt:  now,
+		ExternalId: data.ExternalId,
+		Active:     data.Active,
 	}, nil
 }
 
