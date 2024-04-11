@@ -27,13 +27,13 @@ func (ref *WebHookSubscriptionUseCaseParams) UpdateSubscriptionUseCase(id string
 }
 
 func buildInput(subscription *webhook.Subscription, input webhook.UpdateSubscriptionInput) webhook.UpdateSubscriptionInput {
-	if input.EventType != "" {
+	if input.EventType == "" {
 		input.EventType = subscription.EventType
 	}
-	if input.Url != "" {
+	if input.Url == "" {
 		input.Url = subscription.Url
 	}
-	if input.ExternalId != "" {
+	if input.ExternalId == "" {
 		input.ExternalId = subscription.ExternalId
 	}
 	return input
