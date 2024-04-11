@@ -58,6 +58,9 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 		DataId:     dataId,
 	}
 	messageAsJson, _ := json.Marshal(message)
+	if source == "" {
+		source = "account-service"
+	}
 	attrs := map[string]types.MessageAttributeValue{
 		"EventType": {
 			DataType:    aws.String("String"),
