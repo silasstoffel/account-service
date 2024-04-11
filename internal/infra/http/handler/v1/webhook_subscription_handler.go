@@ -28,12 +28,14 @@ func GetWebHookSubscriptionHandler(router *gin.RouterGroup, config *configs.Conf
 	permissions := make(map[string]string)
 	permissions["POST|/v1/webhooks/subscriptions/"] = "account-service:create-webhook-subscription,account-service:*"
 	permissions["PUT|/v1/webhooks/subscriptions/:id"] = "account-service:update-webhook-subscription,account-service:*"
+	permissions["GET|/v1/webhooks/subscriptions/:id"] = "account-service:find-webhook-subscription,account-service:*"
 
 	authorizer := middleware.NewAuthorizerMiddleware(permissions)
 
 	group := router.Group("/webhooks/subscriptions")
 	group.POST("/", authorizer.AuthorizerMiddleware, createWebHookSubscription())
 	group.PUT("/:id", authorizer.AuthorizerMiddleware, updateWebHookSubscription())
+	group.GET("/:id", authorizer.AuthorizerMiddleware, findWebHookSubscription())
 }
 
 func createWebHookSubscription() gin.HandlerFunc {
@@ -64,8 +66,21 @@ func updateWebHookSubscription() gin.HandlerFunc {
 			c.JSON(400, helper.InvalidInputFormat())
 			return
 		}
-
+		input.Active = true
 		sub, err := WebHookSubscriptionUse.UpdateSubscriptionUseCase(c.Param("id"), input)
+		if err != nil {
+			e := err.(*exception.Exception)
+			c.JSON(e.HttpStatusCode, e.ToDomain())
+			return
+		}
+
+		c.JSON(200, sub)
+	}
+}
+
+func findWebHookSubscription() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sub, err := WebHookSubscriptionUse.FindSubscriptionUseCase(c.Param("id"))
 		if err != nil {
 			e := err.(*exception.Exception)
 			c.JSON(e.HttpStatusCode, e.ToDomain())
