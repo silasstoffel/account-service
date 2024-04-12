@@ -1,0 +1,9 @@
+POST {{v1BaseUrl}}/webhooks/subscriptions
+Content-Type: application/json
+Authorization: Bearer {{jwt}}
+
+{
+	"eventType": "account.updated",
+	"url": "https://steps.free.beeceptor.com/webhooks/account-updated",
+	"externalId": "bkp::001"
+}

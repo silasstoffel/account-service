@@ -1,0 +1,3 @@
+GET {{v1BaseUrl}}/accounts/01HTXANJXPMYPW89E6ZX0NFC63
+Content-Type: application/json
+Authorization: Bearer {{jwt}}

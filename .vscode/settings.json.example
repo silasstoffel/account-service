@@ -1,0 +1,19 @@
+{
+    "rest-client.environmentVariables": {
+        "local": {
+            "baseUrl": "http://localhost:8008",
+            "v1BaseUrl": "http://localhost:8008/v1",
+            "jwt": "L8qq9PZyRg6ieKGEKhZolGC0vJWLw8iEJ88DRdyOg"
+        },
+        "staging": {
+            "baseUrl": "http://localhost:8008",
+            "v1BaseUrl": "http://localhost:8008/v1",
+            "jwt": "L8qq9PZyRg6ieKGEKhZolGC0vJWLw8iEJ88DRdyOg"
+        },
+        "production": {
+            "baseUrl": "http://localhost:8008",
+            "v1BaseUrl": "http://localhost:8008/v1",
+            "jwt": "L8qq9PZyRg6ieKGEKhZolGC0vJWLw8iEJ88DRdyOg"
+        }
+    }
+}

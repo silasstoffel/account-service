@@ -1,0 +1,3 @@
+GET {{v1BaseUrl}}/accounts?limit=1
+Content-Type: application/json
+Authorization: Bearer {{jwt}}

@@ -1,0 +1,3 @@
+GET {{v1BaseUrl}}/webhooks/subscriptions/01HV80AKNYMVCD4YMWSZWD2XBA
+Content-Type: application/json
+Authorization: Bearer {{jwt}}

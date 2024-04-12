@@ -1,0 +1,8 @@
+POST {{baseUrl}}/auth
+Content-Type: application/json
+
+{
+	"email": "super.user@gmail.com",
+	"password": "super.user"
+}
+

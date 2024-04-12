@@ -1,0 +1,9 @@
+PUT {{v1BaseUrl}}/webhooks/subscriptions/01HVA8ESJ0Y3XP5CJJMTBSAK6N
+Content-Type: application/json
+Authorization: Bearer {{jwt}}
+
+{
+	"eventType": "account.activeted",
+	"url": "https://steps.free.beeceptor.com/webhooks/account-activeted",
+	"externalId": "bkp::001222"
+}

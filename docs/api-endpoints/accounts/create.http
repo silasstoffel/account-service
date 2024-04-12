@@ -1,0 +1,12 @@
+POST {{v1BaseUrl}}/accounts
+Content-Type: application/json
+Authorization: Bearer {{jwt}}
+
+{
+	"name": "Batman",
+	"lastName": "Silva",
+	"email": "batman@dc.com",
+	"phone": "+55996354105",
+	"password": "batman",
+	"permissions": ["01HTXA5X7CRCSMGH1QPVDR86EM"]
+}
