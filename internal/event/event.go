@@ -4,13 +4,15 @@ import "time"
 
 // events
 const (
-	AccountCreated             = "account.created"
-	AccountUpdated             = "account.updated"
-	AccountInactive            = "account.inactive"
-	AccountLogged              = "account.logged"
-	EventCreated               = "event.created"
-	WebHookSubscriptionCreated = "webhook.subscription.created"
-	WebHookSubscriptionUpdated = "webhook.subscription.updated"
+	AccountCreated                 = "account.created"
+	AccountUpdated                 = "account.updated"
+	AccountInactive                = "account.inactive"
+	AccountLogged                  = "account.logged"
+	EventCreated                   = "event.created"
+	WebHookSubscriptionCreated     = "webhook.subscription.created"
+	WebHookSubscriptionUpdated     = "webhook.subscription.updated"
+	WebHookSubscriptionActivated   = "webhook.subscription.activated"
+	WebHookSubscriptionDeactivated = "webhook.subscription.deactivated"
 )
 
 // errors

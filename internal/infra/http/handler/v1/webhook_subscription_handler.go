@@ -25,17 +25,21 @@ func GetWebHookSubscriptionHandler(router *gin.RouterGroup, config *configs.Conf
 		WebhookSubscriptionRepository: webhookSubscriptionRepository,
 	}
 
-	permissions := make(map[string]string)
-	permissions["POST|/v1/webhooks/subscriptions/"] = "account-service:create-webhook-subscription,account-service:*"
-	permissions["PUT|/v1/webhooks/subscriptions/:id"] = "account-service:update-webhook-subscription,account-service:*"
-	permissions["GET|/v1/webhooks/subscriptions/:id"] = "account-service:find-webhook-subscription,account-service:*"
-
+	permissions := map[string]string{
+		"POST|/v1/webhooks/subscriptions/":              "account-service:create-webhook-subscription,account-service:*",
+		"PUT|/v1/webhooks/subscriptions/:id":            "account-service:update-webhook-subscription,account-service:*",
+		"GET|/v1/webhooks/subscriptions/:id":            "account-service:find-webhook-subscription,account-service:*",
+		"PATCH|/v1/webhooks/subscriptions/:id/active":   "account-service:update-webhook-subscription,account-service:*",
+		"PATCH|/v1/webhooks/subscriptions/:id/inactive": "account-service:update-webhook-subscription,account-service:*",
+	}
 	authorizer := middleware.NewAuthorizerMiddleware(permissions)
 
 	group := router.Group("/webhooks/subscriptions")
 	group.POST("/", authorizer.AuthorizerMiddleware, createWebHookSubscription())
 	group.PUT("/:id", authorizer.AuthorizerMiddleware, updateWebHookSubscription())
 	group.GET("/:id", authorizer.AuthorizerMiddleware, findWebHookSubscription())
+	group.PATCH("/:id/active", authorizer.AuthorizerMiddleware, changeWebHookSubscriptionStatus(true))
+	group.PATCH("/:id/inactive", authorizer.AuthorizerMiddleware, changeWebHookSubscriptionStatus(false))
 }
 
 func createWebHookSubscription() gin.HandlerFunc {
@@ -75,6 +79,18 @@ func updateWebHookSubscription() gin.HandlerFunc {
 		}
 
 		c.JSON(200, sub)
+	}
+}
+
+func changeWebHookSubscriptionStatus(status bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := WebHookSubscriptionUse.ChangSubscriptionStatusUseCase(c.Param("id"), status)
+		if err != nil {
+			e := err.(*exception.Exception)
+			c.JSON(e.HttpStatusCode, e.ToDomain())
+			return
+		}
+		c.JSON(204, nil)
 	}
 }
 
