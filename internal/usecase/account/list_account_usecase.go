@@ -19,14 +19,14 @@ func (ref *ListAccount) ListAccountUseCase(input domain.ListAccountInput) ([]dom
 
 	if err != nil {
 		log.Println(listLoggerPrefix, "Error when listing accounts", err)
-		return []domain.Account{}, err
+		return nil, err
 	}
 
-	for key, _ := range accounts {
+	for key := range accounts {
 		p, err := ref.AccountPermissionRepository.FindByAccountId(accounts[key].Id)
 		if err != nil {
 			log.Println(listLoggerPrefix, "Error when listing account permissions", err)
-			return []domain.Account{}, err
+			return nil, err
 		}
 		accounts[key].Permissions = p
 	}

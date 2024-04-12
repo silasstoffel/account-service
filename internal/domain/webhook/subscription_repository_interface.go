@@ -14,9 +14,15 @@ type UpdateSubscriptionInput struct {
 	Active     bool   `json:"active,omitempty"`
 }
 
+type ListSubscriptionInput struct {
+	Page  int
+	Limit int
+}
+
 type SubscriptionReadRepository interface {
 	GetByEventType(eventType string) ([]Subscription, error)
 	FindById(id string) (*Subscription, error)
+	List(input ListSubscriptionInput) ([]*Subscription, error)
 }
 
 type SubscriptionWriteRepository interface {

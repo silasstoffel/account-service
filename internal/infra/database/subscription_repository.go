@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -22,14 +23,20 @@ func NewSubscriptionRepository(db *sql.DB) *SubscriptionRepository {
 	}
 }
 
-func buildSelectCommand(where string, orderBy string) string {
+func buildSelectCommand(where, orderBy, limit, offset string) string {
 	if where == "" {
 		where = "1=1"
 	}
 	if orderBy == "" {
 		orderBy = "1"
 	}
-	return `SELECT id, event_type, url, created_at, updated_at, external_id, active FROM webhook_subscriptions WHERE ` + where + ` ORDER BY ` + orderBy
+	query := fmt.Sprintf("SELECT id, event_type, url, created_at, updated_at, external_id, active FROM webhook_subscriptions WHERE %s ORDER BY %s", where, orderBy)
+
+	if limit != "" && offset != "" {
+		query = fmt.Sprintf("%s LIMIT %s OFFSET %s", query, limit, offset)
+	}
+
+	return query
 }
 
 func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]webhook.Subscription, error) {
@@ -41,7 +48,7 @@ func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]we
 		like = before + ".*"
 	}
 
-	stmt := buildSelectCommand("event_type IN($1, $2)", "id")
+	stmt := buildSelectCommand("event_type IN($1, $2)", "id", "", "")
 	rows, err := repository.Db.Query(stmt, eventType, like)
 	if err != nil {
 		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
@@ -95,7 +102,7 @@ func (repository *SubscriptionRepository) Create(subscription webhook.CreateSubs
 }
 
 func (repository *SubscriptionRepository) FindById(id string) (*webhook.Subscription, error) {
-	stmt := buildSelectCommand("id = $1", "id")
+	stmt := buildSelectCommand("id = $1", "id", "", "")
 
 	var subscription webhook.Subscription
 	row := repository.Db.QueryRow(stmt, id)
@@ -142,6 +149,43 @@ func (repository *SubscriptionRepository) Update(id string, data webhook.UpdateS
 		ExternalId: data.ExternalId,
 		Active:     data.Active,
 	}, nil
+}
+
+func (repository *SubscriptionRepository) List(input webhook.ListSubscriptionInput) ([]*webhook.Subscription, error) {
+	log.Println("Listing subscriptions", input)
+	page := input.Page
+	limit := input.Limit
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 12
+	}
+
+	offset := (page - 1) * limit
+	stmt := buildSelectCommand("", "id", "$1", "$2")
+	rows, err := repository.Db.Query(stmt, limit, offset)
+	lp := "[subscription-repository][list]"
+	if err != nil {
+		message := "Error when find subscriptions"
+		log.Println(lp, message, err.Error())
+		return nil, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+	}
+
+	var subscriptions []*webhook.Subscription
+	defer rows.Close()
+
+	for rows.Next() {
+		var sub webhook.Subscription
+		if err := scanSubscription(rows, &sub); err != nil {
+			log.Println(lp, "Error when scan result", err.Error())
+			return nil, exception.New(exception.DbCommandError, "Error when listing accounts", err, exception.HttpInternalError)
+		}
+		subscriptions = append(subscriptions, &sub)
+	}
+
+	return subscriptions, nil
 }
 
 func scanSubscription(row interface{}, subscription *webhook.Subscription) error {
