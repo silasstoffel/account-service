@@ -114,7 +114,7 @@ func listWebHookSubscriptions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		subs, err := WebHookSubscriptionUse.ListSubscriptionUseCase(webhook.ListSubscriptionInput{
 			Page:  utility.StrToInt(c.Query("page"), 1),
-			Limit: utility.StrToInt(c.Query("limit"), 1),
+			Limit: utility.StrToInt(c.Query("limit"), 10),
 		})
 
 		if err != nil {

@@ -12,6 +12,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/http/middleware"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
+	"github.com/silasstoffel/account-service/internal/utility"
 )
 
 var accountRepository *database.AccountRepository
@@ -24,11 +25,12 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 
 	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
 
-	permissions := make(map[string]string)
-	permissions["GET|/v1/accounts/"] = "account-service:list-accounts,account-service:*"
-	permissions["POST|/v1/accounts/"] = "account-service:create-account,account-service:*"
-	permissions["PUT|/v1/accounts/:id"] = "account-service:update-account,account-service:*"
-	permissions["GET|/v1/accounts/:id"] = "account-service:get-account,account-service:*"
+	permissions := map[string]string{
+		"GET|/v1/accounts/":    "account-service:list-accounts,account-service:*",
+		"POST|/v1/accounts/":   "account-service:create-account,account-service:*",
+		"PUT|/v1/accounts/:id": "account-service:update-account,account-service:*",
+		"GET|/v1/accounts/:id": "account-service:get-account,account-service:*",
+	}
 	authorizer := middleware.NewAuthorizerMiddleware(permissions)
 
 	group := router.Group("/accounts")
@@ -44,13 +46,19 @@ func listAccount() gin.HandlerFunc {
 			AccountRepository:           accountRepository,
 			AccountPermissionRepository: accountPermissionRepository,
 		}
-		input := domain.ListAccountInput{Page: 1, Limit: 12}
-		accounts, err := listAccount.ListAccountUseCase(input)
+		accounts, err := listAccount.ListAccountUseCase(
+			domain.ListAccountInput{
+				Page:  utility.StrToInt(c.Query("page"), 1),
+				Limit: utility.StrToInt(c.Query("limit"), 10),
+			},
+		)
 
 		if err != nil {
-			c.JSON(500, gin.H{"code": exception.UnknownError, "message": "Unknown error has happened"})
+			e := err.(*exception.Exception)
+			c.JSON(e.HttpStatusCode, e.ToDomain())
 			return
 		}
+
 		c.JSON(200, accounts)
 	}
 }
