@@ -48,5 +48,7 @@ go run cmd/webhook-sender/main.go
 
 ## Infos
 
-- To see API endpoints and payloads, access this [directory](./docs/api-endpoints/)
+- To view API endpoints and payloads, access this [directory](./docs/api-endpoints/) *.
 - To see all the events, check [this file](./internal/event/event.go) out.
+
+*. You can use the [Rest Client extension](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) in your vscode to test the API. Use [this file](.vscode/settings.json.example) as a model to configure your vscode settings.
