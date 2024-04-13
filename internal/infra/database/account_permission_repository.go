@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
@@ -17,6 +18,34 @@ func NewAccountPermissionRepository(db *sql.DB) *AccountPermissionRepository {
 	return &AccountPermissionRepository{
 		Db: db,
 	}
+}
+
+func buildAccountPermissionSelectCommand(where, orderBy, limit, offset string) string {
+	if where == "" {
+		where = "1=1"
+	}
+	if orderBy == "" {
+		orderBy = "1"
+	}
+
+	stmt := `SELECT
+				ap.account_id,
+				ap.permission_id,
+				ap.created_at,
+				p.scope,
+				p.active
+			FROM account_permissions ap
+				 JOIN permissions p ON p.id = ap.permission_id
+			WHERE %s
+			ORDER BY %s`
+
+	query := fmt.Sprintf(stmt, where, orderBy)
+
+	if limit != "" && offset != "" {
+		query = fmt.Sprintf("%s LIMIT %s OFFSET %s", query, limit, offset)
+	}
+
+	return query
 }
 
 func (repository *AccountPermissionRepository) Create(data domain.CreateAccountPermissionInput) error {
@@ -50,12 +79,8 @@ func (repository *AccountPermissionRepository) DeleteByAccount(accountId string)
 }
 
 func (repository *AccountPermissionRepository) FindByAccountId(accountId string) ([]domain.AccountPermission, error) {
-	stmt := `SELECT
-		ap.account_id, ap.permission_id, ap.created_at, p.scope, p.active
-	FROM account_permissions ap, permissions p
-	WHERE p.id = ap.permission_id
-		AND ap.account_id = $1`
-	rows, err := repository.Db.Query(stmt, accountId)
+	query := buildAccountPermissionSelectCommand("ap.account_id = $1", "", "", "")
+	rows, err := repository.Db.Query(query, accountId)
 	if err != nil {
 		message := "Error when querying account permission"
 		log.Println(message, "Detail:", err)

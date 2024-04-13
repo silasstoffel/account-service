@@ -152,7 +152,6 @@ func (repository *SubscriptionRepository) Update(id string, data webhook.UpdateS
 }
 
 func (repository *SubscriptionRepository) List(input webhook.ListSubscriptionInput) ([]*webhook.Subscription, error) {
-	log.Println("Listing subscriptions", input)
 	page := input.Page
 	limit := input.Limit
 

@@ -1,0 +1,3 @@
+GET {{v1BaseUrl}}/permissions?limit=10&page=1
+Content-Type: application/json
+Authorization: Bearer {{jwt}}
