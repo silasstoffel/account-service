@@ -46,7 +46,7 @@ go run cmd/webhook-schedule/main.go
 go run cmd/webhook-sender/main.go
 ```
 
-## Infos
+## Helpful Tips
 
 - To view API endpoints and payloads, access this [directory](./docs/api-endpoints/) *.
 - To see all the events, check [this file](./internal/event/event.go) out.
