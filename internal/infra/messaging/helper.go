@@ -14,13 +14,13 @@ func ExtractMessageFromTopic(rawMessage *types.Message, message interface{}) err
 	if err := json.Unmarshal([]byte(*rawMessage.Body), &topicMessageSchema); err != nil {
 		detail := "Error when parser message from topic"
 		log.Println(message, detail, err)
-		return exception.NewUnknown(&err)
+		return exception.NewUnknownError(&err)
 	}
 
 	if err := json.Unmarshal([]byte(topicMessageSchema.Message), &message); err != nil {
 		detail := "Error when parser message from queue"
 		log.Println(message, detail, err)
-		return exception.NewUnknown(&err)
+		return exception.NewUnknownError(&err)
 	}
 	return nil
 }
@@ -29,7 +29,7 @@ func ExtractMessageFromQueue(rawMessage *types.Message, message interface{}) err
 	if err := json.Unmarshal([]byte(*rawMessage.Body), &message); err != nil {
 		detail := "Error when parser message from queue"
 		log.Println(message, detail, err)
-		return exception.NewUnknown(&err)
+		return exception.NewUnknownError(&err)
 	}
 	return nil
 }

@@ -150,5 +150,5 @@ func scanTransactions(row interface{}, transaction *webhook.WebhookTransaction) 
 		)
 	}
 	e := errors.New("row argument is not sql.Row or sql.Rows")
-	return exception.NewUnknown(&e)
+	return exception.NewUnknownError(&e)
 }

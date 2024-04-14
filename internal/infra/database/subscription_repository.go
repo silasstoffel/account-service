@@ -87,7 +87,7 @@ func (repository *SubscriptionRepository) Create(subscription webhook.CreateSubs
 
 	if err != nil {
 		log.Println(lp, "Error when creating webhook subscription", err.Error())
-		return nil, exception.NewUnknown(&err)
+		return nil, exception.NewUnknownError(&err)
 	}
 
 	return &webhook.Subscription{
@@ -116,7 +116,7 @@ func (repository *SubscriptionRepository) FindById(id string) (*webhook.Subscrip
 			return nil, exception.New(exception.WebhookSubscriptionNotFound, &err)
 		}
 		log.Println(lp, message, err.Error())
-		return nil, exception.NewUnknown(&err)
+		return nil, exception.NewUnknownError(&err)
 	}
 
 	return &subscription, nil
@@ -138,7 +138,7 @@ func (repository *SubscriptionRepository) Update(id string, data webhook.UpdateS
 	if err != nil {
 		lp := "[subscription-repository][update]"
 		log.Println(lp, "Error when updating webhook subscription", err.Error())
-		return nil, exception.NewUnknown(&err)
+		return nil, exception.NewUnknownError(&err)
 	}
 
 	return &webhook.Subscription{
@@ -211,5 +211,5 @@ func scanSubscription(row interface{}, subscription *webhook.Subscription) error
 		)
 	}
 	e := errors.New("row argument is not sql.Row or sql.Rows")
-	return exception.NewUnknown(&e)
+	return exception.NewUnknownError(&e)
 }

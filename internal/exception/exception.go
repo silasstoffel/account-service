@@ -17,7 +17,7 @@ func New(code string, err *error) *Exception {
 	}
 }
 
-func NewUnknown(err *error) *Exception {
+func NewUnknownError(err *error) *Exception {
 	m, c := GetMessageByCode(UnknownError)
 	return &Exception{
 		Code:          UnknownError,

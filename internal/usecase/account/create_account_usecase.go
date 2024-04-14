@@ -32,7 +32,7 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 	if err != nil {
 		detail := err.(*exception.Exception)
 		if detail.Code != accountDomain.AccountNotFound {
-			return exception.NewUnknown(&err)
+			return exception.NewUnknownError(&err)
 		}
 	}
 
@@ -44,7 +44,7 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 	if err != nil {
 		detail := err.(*exception.Exception)
 		if detail.Code != accountDomain.AccountNotFound {
-			return exception.NewUnknown(&err)
+			return exception.NewUnknownError(&err)
 		}
 	}
 
