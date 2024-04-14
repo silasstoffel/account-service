@@ -1,45 +1,44 @@
 package exception
 
-const (
-	UnknownError      = "UNKNOWN_ERROR"
-	DbCommandError    = "DATABASE_ERROR"
-	EntityNotFound    = "ENTITY_NOT_FOUND"
-	HttpClientError   = 400
-	HttpUnauthorized  = 401
-	HttpNotFoundError = 404
-	HttpInternalError = 500
-)
-
 type Exception struct {
-	Code           string `json:"code"`
-	Message        string `json:"message"`
-	OriginalError  error  `json:"-"`
-	HttpStatusCode int    `json:"-"`
+	Code          string `json:"code"`
+	Message       string `json:"message"`
+	OriginalError error  `json:"-"`
+	StatusCode    int    `json:"-"`
 }
 
-type ShortException struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-func New(code string, message string, originalError error, httpStatus int) *Exception {
-	status := 500
-	if httpStatus != 0 {
-		status = httpStatus
-	}
+func New(code string, err *error) *Exception {
+	m, c := GetMessageByCode(code)
 	return &Exception{
-		Code:           code,
-		Message:        message,
-		OriginalError:  originalError,
-		HttpStatusCode: status,
+		Code:          code,
+		Message:       m,
+		OriginalError: *err,
+		StatusCode:    c,
 	}
 }
 
-func (e *Exception) ToDomain() ShortException {
-	return ShortException{
-		Code:    e.Code,
-		Message: e.Message,
+func NewUnknown(err *error) *Exception {
+	m, c := GetMessageByCode(UnknownError)
+	return &Exception{
+		Code:          UnknownError,
+		Message:       m,
+		OriginalError: *err,
+		StatusCode:    c,
 	}
+}
+
+func NewDbCommandError(err *error) *Exception {
+	m, c := GetMessageByCode(DbCommandError)
+	return &Exception{
+		Code:          DbCommandError,
+		Message:       m,
+		OriginalError: *err,
+		StatusCode:    c,
+	}
+}
+
+func (e *Exception) GetStatusCode() int {
+	return e.StatusCode
 }
 
 func (e *Exception) Error() string {

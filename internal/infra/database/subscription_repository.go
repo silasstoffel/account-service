@@ -52,7 +52,7 @@ func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]we
 	rows, err := repository.Db.Query(stmt, eventType, like)
 	if err != nil {
 		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
-		return subscriptions, exception.New(exception.DbCommandError, "Error when listing subscriptions", err, exception.HttpInternalError)
+		return subscriptions, exception.NewDbCommandError(&err)
 	}
 
 	message := "Error when scanning subscription"
@@ -62,7 +62,7 @@ func (repository *SubscriptionRepository) GetByEventType(eventType string) ([]we
 		var subscription webhook.Subscription
 		if err := scanSubscription(rows, &subscription); err != nil {
 			log.Println(loggerPrefix, message, err.Error())
-			return subscriptions, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+			return subscriptions, exception.NewDbCommandError(&err)
 		}
 		subscriptions = append(subscriptions, subscription)
 	}
@@ -87,7 +87,7 @@ func (repository *SubscriptionRepository) Create(subscription webhook.CreateSubs
 
 	if err != nil {
 		log.Println(lp, "Error when creating webhook subscription", err.Error())
-		return nil, exception.New(exception.UnknownError, "Error when creating webhook subscription", err, exception.HttpInternalError)
+		return nil, exception.NewUnknown(&err)
 	}
 
 	return &webhook.Subscription{
@@ -113,10 +113,10 @@ func (repository *SubscriptionRepository) FindById(id string) (*webhook.Subscrip
 		if err == sql.ErrNoRows {
 			message := "Subscription not found"
 			log.Println(lp, message, err.Error())
-			return nil, exception.New(webhook.SubscriptionNotFound, message, nil, exception.HttpNotFoundError)
+			return nil, exception.New(exception.WebhookSubscriptionNotFound, &err)
 		}
 		log.Println(lp, message, err.Error())
-		return nil, exception.New(exception.UnknownError, message, err, exception.HttpInternalError)
+		return nil, exception.NewUnknown(&err)
 	}
 
 	return &subscription, nil
@@ -138,7 +138,7 @@ func (repository *SubscriptionRepository) Update(id string, data webhook.UpdateS
 	if err != nil {
 		lp := "[subscription-repository][update]"
 		log.Println(lp, "Error when updating webhook subscription", err.Error())
-		return nil, exception.New(exception.UnknownError, "Error when updating webhook subscription", err, exception.HttpInternalError)
+		return nil, exception.NewUnknown(&err)
 	}
 
 	return &webhook.Subscription{
@@ -169,7 +169,7 @@ func (repository *SubscriptionRepository) List(input webhook.ListSubscriptionInp
 	if err != nil {
 		message := "Error when find subscriptions"
 		log.Println(lp, message, err.Error())
-		return nil, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return nil, exception.NewDbCommandError(&err)
 	}
 
 	var subscriptions []*webhook.Subscription
@@ -179,7 +179,7 @@ func (repository *SubscriptionRepository) List(input webhook.ListSubscriptionInp
 		var sub webhook.Subscription
 		if err := scanSubscription(rows, &sub); err != nil {
 			log.Println(lp, "Error when scan result", err.Error())
-			return nil, exception.New(exception.DbCommandError, "Error when listing accounts", err, exception.HttpInternalError)
+			return nil, exception.NewDbCommandError(&err)
 		}
 		subscriptions = append(subscriptions, &sub)
 	}
@@ -210,11 +210,6 @@ func scanSubscription(row interface{}, subscription *webhook.Subscription) error
 			&subscription.Active,
 		)
 	}
-
-	return exception.New(
-		exception.UnknownError,
-		"An Unknown error happens",
-		errors.New("row argument is not sql.Row or sql.Rows"),
-		exception.HttpInternalError,
-	)
+	e := errors.New("row argument is not sql.Row or sql.Rows")
+	return exception.NewUnknown(&e)
 }

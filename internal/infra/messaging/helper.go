@@ -13,24 +13,14 @@ var topicMessageSchema MessageSchema
 func ExtractMessageFromTopic(rawMessage *types.Message, message interface{}) error {
 	if err := json.Unmarshal([]byte(*rawMessage.Body), &topicMessageSchema); err != nil {
 		detail := "Error when parser message from topic"
-		log.Println(message, err)
-		return exception.New(
-			ErrorParserMessageFromTopic,
-			detail,
-			err,
-			exception.HttpInternalError,
-		)
+		log.Println(message, detail, err)
+		return exception.NewUnknown(&err)
 	}
 
 	if err := json.Unmarshal([]byte(topicMessageSchema.Message), &message); err != nil {
 		detail := "Error when parser message from queue"
-		log.Println(message, err)
-		return exception.New(
-			ErrorParserMessageFromQueue,
-			detail,
-			err,
-			exception.HttpInternalError,
-		)
+		log.Println(message, detail, err)
+		return exception.NewUnknown(&err)
 	}
 	return nil
 }
@@ -38,13 +28,8 @@ func ExtractMessageFromTopic(rawMessage *types.Message, message interface{}) err
 func ExtractMessageFromQueue(rawMessage *types.Message, message interface{}) error {
 	if err := json.Unmarshal([]byte(*rawMessage.Body), &message); err != nil {
 		detail := "Error when parser message from queue"
-		log.Println(message, err)
-		return exception.New(
-			ErrorParserMessageFromQueue,
-			detail,
-			err,
-			exception.HttpInternalError,
-		)
+		log.Println(message, detail, err)
+		return exception.NewUnknown(&err)
 	}
 	return nil
 }

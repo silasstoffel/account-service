@@ -31,9 +31,9 @@ func (repository *EventRepository) Create(event event.Event) error {
 	)
 
 	if err != nil {
-		loggerPrefix := "[event-repository]"
-		log.Println(loggerPrefix, "Error when create event", err.Error())
-		return exception.New(exception.DbCommandError, "Error when creating event", err, exception.HttpInternalError)
+		lp := "[event-repository]"
+		log.Println(lp, "Error when create event", err.Error())
+		return exception.New(exception.DbCommandError, &err)
 	}
 
 	return nil

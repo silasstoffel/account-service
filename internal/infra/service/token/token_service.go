@@ -52,19 +52,18 @@ func (ref *TokenService) VerifyToken(token string) (*auth.VerifyTokenOutput, err
 	if err != nil {
 		message := "Error when parse token"
 		log.Println(lp, message, err.Error())
-		return nil, exception.New(auth.ErrorParseToken, message, err, exception.HttpUnauthorized)
+		return nil, exception.New(exception.ErrorParseToken, &err)
 	}
 
 	if !t.Valid {
-		message := "Invalid token"
-		return nil, exception.New(auth.ErrorParseToken, message, err, exception.HttpUnauthorized)
+		return nil, exception.New(exception.ErrorParseToken, &err)
 	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
 		message := "Error when convert token"
 		log.Println(lp, message)
-		return nil, exception.New(auth.ErrorConvertToken, message, err, exception.HttpUnauthorized)
+		return nil, exception.New(exception.ErrorConvertToken, &err)
 	}
 
 	return &auth.VerifyTokenOutput{

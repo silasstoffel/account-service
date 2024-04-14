@@ -33,12 +33,12 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 		if err != nil {
 			detail := err.(*exception.Exception)
 			if detail.Code != accountDomain.AccountNotFound {
-				return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
+				return exception.New(exception.UnknownError, &err)
 			}
 		}
 
 		if !account.IsEmpty() && account.Id != accountId {
-			return exception.New(accountDomain.AccountEmailAlreadyExists, "Email already registered", err, exception.HttpClientError)
+			return exception.New(exception.AccountEmailAlreadyExists, &err)
 		}
 	}
 
@@ -47,12 +47,12 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 		if err != nil {
 			detail := err.(*exception.Exception)
 			if detail.Code != accountDomain.AccountNotFound {
-				return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
+				return exception.New(exception.UnknownError, &err)
 			}
 		}
 
 		if !account.IsEmpty() && account.Id != accountId {
-			return exception.New(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err, exception.HttpClientError)
+			return exception.New(exception.AccountEmailAlreadyExists, &err)
 		}
 	}
 

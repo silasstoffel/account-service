@@ -15,13 +15,6 @@ const (
 	WebHookSubscriptionDeactivated = "webhook.subscription.deactivated"
 )
 
-// errors
-const (
-	ErrorPublishingEvent      = "ERROR_PUBLISHING_EVENT"
-	ErrorConvertMessageToJson = "ERROR_CONVERT_MESSAGE_TO_JSON"
-	ErrorInstanceEventBus     = "ERROR_INSTANCE_EVENT_BUS"
-)
-
 type Event struct {
 	Id         string    `json:"id"`
 	DataId     string    `json:"dataId"`

@@ -55,7 +55,7 @@ func listAccount() gin.HandlerFunc {
 
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.GetStatusCode(), e)
 			return
 		}
 
@@ -74,14 +74,7 @@ func getAccount() gin.HandlerFunc {
 
 		if err != nil {
 			detail := err.(*exception.Exception)
-			status := detail.HttpStatusCode
-
-			if status < 500 {
-				c.JSON(status, detail.ToDomain())
-				return
-			}
-
-			c.JSON(detail.HttpStatusCode, gin.H{"code": exception.UnknownError, "message": "Unknown error has happened"})
+			c.JSON(detail.StatusCode, detail)
 			return
 		}
 		c.JSON(200, account)
@@ -105,7 +98,7 @@ func createAccount() gin.HandlerFunc {
 		account, err := createAccount.CreateAccountUseCase(input)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			c.JSON(detail.HttpStatusCode, detail.ToDomain())
+			c.JSON(detail.StatusCode, detail)
 			return
 		}
 
@@ -130,7 +123,7 @@ func updateAccount() gin.HandlerFunc {
 		account, err := updateAccountInstance.UpdateAccountUseCase(c.Param("id"), input)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			c.JSON(detail.HttpStatusCode, detail.ToDomain())
+			c.JSON(detail.StatusCode, detail)
 			return
 		}
 

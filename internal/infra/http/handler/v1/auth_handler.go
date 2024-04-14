@@ -48,7 +48,7 @@ func auth() gin.HandlerFunc {
 		auth, err := authUseCaseParams.AuthenticateUseCase(&input)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			c.JSON(detail.HttpStatusCode, detail.ToDomain())
+			c.JSON(detail.StatusCode, detail)
 			return
 		}
 
@@ -65,7 +65,7 @@ func verify(
 		account, err := accountRepository.FindById(accountId)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			c.JSON(detail.HttpStatusCode, detail.ToDomain())
+			c.JSON(detail.StatusCode, detail)
 			return
 		}
 

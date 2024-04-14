@@ -24,13 +24,12 @@ func OpenConnection(config *configs.Config) (*sql.DB, error) {
 	if err != nil {
 		message := "Failed to open connection to database"
 		log.Println(message, "Details:", err)
-		return nil, exception.New(exception.UnknownError, message, err, 500)
+		return nil, exception.New(exception.UnknownError, &err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		message := "Failed to ping database"
-		return nil, exception.New(exception.UnknownError, message, err, 500)
+		return nil, exception.New(exception.UnknownError, &err)
 	}
 
 	return db, nil
@@ -38,7 +37,7 @@ func OpenConnection(config *configs.Config) (*sql.DB, error) {
 
 func CloseConnection(cnx *sql.DB) error {
 	if err := cnx.Close(); err != nil {
-		return exception.New(exception.UnknownError, "Failed to ping database", err, 500)
+		return exception.New(exception.UnknownError, &err)
 	}
 	return nil
 }

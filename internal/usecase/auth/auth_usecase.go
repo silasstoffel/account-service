@@ -37,20 +37,20 @@ func (ref *AuthParams) AuthenticateUseCase(data *AuthInput) (*AuthOutput, error)
 		if detail.Code != domain.AccountNotFound {
 			message := "Error when find account by e-mail"
 			log.Println(message, err)
-			return nil, exception.New(exception.UnknownError, message, err, exception.HttpInternalError)
+			return nil, exception.New(exception.UnknownError, &err)
 		}
-		return nil, exception.New(domain.InvalidUserOrPassword, "Invalid user or password", err, exception.HttpUnauthorized)
+		return nil, exception.New(exception.InvalidUserOrPassword, &err)
 	}
 
 	if err := service.CompareHash(data.Password, account.HashedPwd); err != nil {
-		return nil, exception.New(domain.InvalidUserOrPassword, "Invalid user or password", err, exception.HttpUnauthorized)
+		return nil, exception.New(exception.InvalidUserOrPassword, &err)
 	}
 
 	token, err := ref.TokenService.CreateToken(account.Id)
 	if err != nil {
 		message := "Error when create token"
 		log.Println(message, err)
-		return nil, exception.New(exception.UnknownError, message, err, exception.HttpInternalError)
+		return nil, exception.New(exception.UnknownError, &err)
 	}
 
 	result, err := ref.AccountPermissionRepository.FindByAccountId(account.Id)

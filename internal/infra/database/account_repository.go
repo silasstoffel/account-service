@@ -52,7 +52,7 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 
 	if err != nil {
 		log.Println(loggerPrefix, "Error when creating account", err.Error())
-		return account, exception.New(exception.DbCommandError, "Error when creating account", err, exception.HttpInternalError)
+		return account, exception.New(exception.DbCommandError, &err)
 	}
 
 	return account, nil
@@ -70,9 +70,9 @@ func (repository *AccountRepository) FindByEmail(email string) (accountDomain.Ac
 	if err != nil {
 		log.Println(loggerPrefix, "Error find account by email. Detail", err.Error())
 		if err == sql.ErrNoRows {
-			return account, exception.New(accountDomain.AccountNotFound, "Account not found", nil, exception.HttpNotFoundError)
+			return account, exception.New(exception.AccountNotFound, &err)
 		}
-		return account, exception.New(exception.DbCommandError, "Error when finding account by e-mail", err, exception.HttpInternalError)
+		return account, exception.New(exception.DbCommandError, &err)
 	}
 	return account, nil
 }
@@ -91,9 +91,9 @@ func (repository *AccountRepository) FindByPhone(phone string) (accountDomain.Ac
 		log.Println(loggerPrefix, "Error find account by phone. Detail", err.Error())
 		if err == sql.ErrNoRows {
 			log.Println(loggerPrefix, "There is no row to return")
-			return account, exception.New(accountDomain.AccountNotFound, "Account not found", nil, exception.HttpNotFoundError)
+			return account, exception.New(exception.AccountNotFound, &err)
 		}
-		return account, exception.New(exception.DbCommandError, "Error when finding account by e-mail", err, exception.HttpInternalError)
+		return account, exception.New(exception.DbCommandError, &err)
 	}
 
 	log.Println(loggerPrefix, "Account found with id", account.Id)
@@ -118,7 +118,7 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 	var accounts []accountDomain.Account
 	if err != nil {
 		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
-		return accounts, exception.New(exception.DbCommandError, "Error when listing accounts", err, exception.HttpInternalError)
+		return accounts, exception.New(exception.DbCommandError, &err)
 	}
 
 	defer rows.Close()
@@ -126,7 +126,7 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 		var account accountDomain.Account
 		if err := scanRow(rows, &account); err != nil {
 			log.Println(loggerPrefix, "error when scan result", err.Error())
-			return accounts, exception.New(exception.DbCommandError, "Error when listing accounts", err, exception.HttpInternalError)
+			return accounts, exception.New(exception.DbCommandError, &err)
 		}
 		accounts = append(accounts, account)
 	}
@@ -145,9 +145,9 @@ func (repository *AccountRepository) FindById(accountId string) (accountDomain.A
 	if err := scanRow(row, &account); err != nil {
 		log.Println(loggerPrefix, "Error when finding account by id.", err.Error())
 		if err == sql.ErrNoRows {
-			return account, exception.New(accountDomain.AccountNotFound, "Account not found", nil, exception.HttpNotFoundError)
+			return account, exception.New(exception.AccountNotFound, &err)
 		}
-		return account, exception.New(exception.DbCommandError, "Error when finding account by id.", err, exception.HttpInternalError)
+		return account, exception.New(exception.DbCommandError, &err)
 	}
 	return account, nil
 }
@@ -212,7 +212,7 @@ func (repository *AccountRepository) Update(id string, data accountDomain.Accoun
 	_, err = repository.Db.Exec(query, args...)
 	if err != nil {
 		log.Println(loggerPrefix, "Error when updating account", id, err.Error())
-		return account, exception.New(exception.DbCommandError, "Error when updating account", err, exception.HttpInternalError)
+		return account, exception.New(exception.DbCommandError, &err)
 	}
 
 	return account, nil
@@ -247,10 +247,6 @@ func scanRow(row interface{}, account *accountDomain.Account) error {
 			&account.HashedPwd,
 		)
 	}
-	return exception.New(
-		exception.UnknownError,
-		"An Unknown error happens",
-		errors.New("ScanRow error is not sql.Row or sql.Rows"),
-		exception.HttpInternalError,
-	)
+	m := errors.New("ScanRow error is not sql.Row or sql.Rows")
+	return exception.New(exception.UnknownError, &m)
 }

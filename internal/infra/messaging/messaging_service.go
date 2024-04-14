@@ -43,7 +43,7 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	if err != nil {
 		message := "Error when convert event payload to json."
 		log.Println(prefix, message, "Detail", err.Error())
-		return exception.New(event.ErrorConvertMessageToJson, message, err, exception.HttpInternalError)
+		return exception.New(exception.ErrorConvertMessageToJson, &err)
 	}
 
 	id := helper.NewULID()
@@ -81,7 +81,7 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	if err != nil {
 		message := "Error to publish event on topic."
 		log.Println(prefix, message, "Detail", err.Error())
-		return exception.New(event.ErrorConvertMessageToJson, message, err, exception.HttpInternalError)
+		return exception.New(exception.ErrorConvertMessageToJson, &err)
 	}
 
 	return nil

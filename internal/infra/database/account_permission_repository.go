@@ -59,7 +59,7 @@ func (repository *AccountPermissionRepository) Create(data domain.CreateAccountP
 	if err != nil {
 		message := "Error when creating account permission"
 		log.Println(message, "Detail:", err)
-		return exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return exception.New(exception.DbCommandError, &err)
 	}
 
 	return nil
@@ -72,7 +72,7 @@ func (repository *AccountPermissionRepository) DeleteByAccount(accountId string)
 	if err != nil {
 		message := "Error when deleting account permission"
 		log.Println(message, "Detail:", err)
-		return exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return exception.New(exception.DbCommandError, &err)
 	}
 
 	return nil
@@ -84,7 +84,7 @@ func (repository *AccountPermissionRepository) FindByAccountId(accountId string)
 	if err != nil {
 		message := "Error when querying account permission"
 		log.Println(message, "Detail:", err)
-		return nil, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return nil, exception.New(exception.DbCommandError, &err)
 	}
 	defer rows.Close()
 
@@ -120,10 +120,6 @@ func scanAccountPermissionRow(row interface{}, data *domain.AccountPermission) e
 			&data.Active,
 		)
 	}
-	return exception.New(
-		exception.UnknownError,
-		"An Unknown error happens",
-		errors.New("ScanRow error is not sql.Row or sql.Rows"),
-		exception.HttpInternalError,
-	)
+	e := errors.New("ScanRow error is not sql.Row or sql.Rows")
+	return exception.New(exception.UnknownError, &e)
 }

@@ -55,7 +55,7 @@ func (repository *PermissionRepository) List(input domain.ListPermissionInput) (
 	if err != nil {
 		message := "Failure when querying permission"
 		log.Println(lp, message, err)
-		return nil, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return nil, exception.NewUnknown(&err)
 	}
 	defer rows.Close()
 
@@ -90,10 +90,6 @@ func scanPermissionRow(row interface{}, data *domain.Permission) error {
 			&data.CreatedAt,
 		)
 	}
-	return exception.New(
-		exception.UnknownError,
-		"An Unknown error happens",
-		errors.New("ScanRow error is not sql.Row or sql.Rows"),
-		exception.HttpInternalError,
-	)
+	e := errors.New("ScanRow error is not sql.Row or sql.Rows")
+	return exception.NewUnknown(&e)
 }

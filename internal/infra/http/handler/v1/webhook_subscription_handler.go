@@ -57,7 +57,7 @@ func createWebHookSubscription() gin.HandlerFunc {
 		sub, err := WebHookSubscriptionUse.CreateSubscriptionUseCase(input)
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.StatusCode, e)
 			return
 		}
 
@@ -77,7 +77,7 @@ func updateWebHookSubscription() gin.HandlerFunc {
 		sub, err := WebHookSubscriptionUse.UpdateSubscriptionUseCase(c.Param("id"), input)
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.StatusCode, e)
 			return
 		}
 
@@ -90,7 +90,7 @@ func changeWebHookSubscriptionStatus(status bool) gin.HandlerFunc {
 		err := WebHookSubscriptionUse.ChangSubscriptionStatusUseCase(c.Param("id"), status)
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.StatusCode, e)
 			return
 		}
 		c.JSON(204, nil)
@@ -102,7 +102,7 @@ func findWebHookSubscription() gin.HandlerFunc {
 		sub, err := WebHookSubscriptionUse.FindSubscriptionUseCase(c.Param("id"))
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.StatusCode, e)
 			return
 		}
 
@@ -119,7 +119,7 @@ func listWebHookSubscriptions() gin.HandlerFunc {
 
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.StatusCode, e)
 			return
 		}
 

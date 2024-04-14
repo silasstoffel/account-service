@@ -25,7 +25,7 @@ func GetPermissionHandler(router *gin.RouterGroup, config *configs.Config, db *s
 
 		if err != nil {
 			e := err.(*exception.Exception)
-			c.JSON(e.HttpStatusCode, e.ToDomain())
+			c.JSON(e.StatusCode, e)
 			return
 		}
 

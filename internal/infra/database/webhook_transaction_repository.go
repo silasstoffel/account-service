@@ -33,9 +33,9 @@ func (repository *WebhookTransactionRepository) FindById(id string) (webhook.Web
 	if err := scanTransactions(row, &transaction); err != nil {
 		log.Println("Error when finding transactions by id.", err)
 		if err == sql.ErrNoRows {
-			return transaction, exception.New(webhook.WebhookTransactionNotFound, "Webhook transaction not found", nil, exception.HttpNotFoundError)
+			return transaction, exception.New(webhook.WebhookTransactionNotFound, &err)
 		}
-		return transaction, exception.New(exception.DbCommandError, "Error when finding account by id.", err, exception.HttpInternalError)
+		return transaction, exception.NewDbCommandError(&err)
 	}
 
 	return transaction, nil
@@ -74,7 +74,7 @@ func (repository *WebhookTransactionRepository) Create(transaction webhook.Webho
 	if err != nil {
 		message := "Error when creating webhook transaction"
 		log.Println(message, err)
-		return transaction, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return transaction, exception.NewDbCommandError(&err)
 	}
 
 	return transaction, nil
@@ -108,7 +108,7 @@ func (repository *WebhookTransactionRepository) Update(id string, transaction we
 	if err != nil {
 		message := "Error when updating webhook transactions"
 		log.Println(loggerPrefix, message, "id:", id, "eventId:", toUpdate.EventId, err)
-		return toUpdate, exception.New(exception.DbCommandError, message, err, exception.HttpInternalError)
+		return toUpdate, exception.NewDbCommandError(&err)
 	}
 
 	toUpdate.ReceivedStatusCode = transaction.ReceivedStatusCode
@@ -149,11 +149,6 @@ func scanTransactions(row interface{}, transaction *webhook.WebhookTransaction) 
 			&transaction.UpdatedAt,
 		)
 	}
-
-	return exception.New(
-		exception.UnknownError,
-		"An Unknown error happens",
-		errors.New("row argument is not sql.Row or sql.Rows"),
-		exception.HttpInternalError,
-	)
+	e := errors.New("row argument is not sql.Row or sql.Rows")
+	return exception.NewUnknown(&e)
 }

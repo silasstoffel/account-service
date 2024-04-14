@@ -32,24 +32,24 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 	if err != nil {
 		detail := err.(*exception.Exception)
 		if detail.Code != accountDomain.AccountNotFound {
-			return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
+			return exception.NewUnknown(&err)
 		}
 	}
 
 	if !account.IsEmpty() {
-		return exception.New(accountDomain.AccountEmailAlreadyExists, "Email already registered", err, exception.HttpClientError)
+		return exception.New(exception.AccountEmailAlreadyExists, &err)
 	}
 
 	account, err = ref.AccountRepository.FindByPhone(input.Phone)
 	if err != nil {
 		detail := err.(*exception.Exception)
 		if detail.Code != accountDomain.AccountNotFound {
-			return exception.New(exception.UnknownError, "Unknown error has happened", err, exception.HttpInternalError)
+			return exception.NewUnknown(&err)
 		}
 	}
 
 	if !account.IsEmpty() {
-		return exception.New(accountDomain.AccountEmailAlreadyExists, "Phone already registered", err, exception.HttpClientError)
+		return exception.New(exception.AccountEmailAlreadyExists, &err)
 	}
 
 	return nil
@@ -117,14 +117,14 @@ func createAccountPermissions(
 			if err != nil {
 				message := "Error when creating account permission"
 				log.Println(message, "Detail:", err)
-				return nil, exception.New(exception.DbCommandError, message, err, 500)
+				return nil, exception.New(exception.DbCommandError, &err)
 			}
 		}
 		createdPermissions, err = accountPermissionRepository.FindByAccountId(accountId)
 		if err != nil {
 			message := "Error when querying account permission"
 			log.Println(message, "Detail:", err)
-			return nil, exception.New(exception.DbCommandError, message, err, 500)
+			return nil, exception.New(exception.DbCommandError, &err)
 		}
 	}
 	return createdPermissions, nil

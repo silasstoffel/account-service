@@ -132,7 +132,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 		if isTimeout {
 			message := "Webhook notification timeout"
 			log.Println(message, err.Error())
-			return stats, exception.New(webhook.WebhookTransactionNotificationTimeout, "Webhook notification timeout", nil, exception.HttpClientError)
+			return stats, exception.New(exception.WebhookTransactionNotificationTimeout, &err)
 		}
 		return stats, err
 	}

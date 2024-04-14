@@ -26,7 +26,7 @@ func BuildAwsConfig(app *appConfig.Config) (cfg aws.Config, er error) {
 	if err != nil {
 		message := "Error when creating AWS client"
 		log.Println(message, err.Error())
-		return aws.Config{}, exception.New("ERROR_CREATING_AWS_CLIENT", message, err, exception.HttpInternalError)
+		return aws.Config{}, exception.NewUnknown(&err)
 	}
 
 	return awsCfg, nil
