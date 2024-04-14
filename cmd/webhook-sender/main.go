@@ -149,7 +149,7 @@ func upsert(message messageDetail, stats notifyStats) error {
 
 	if err != nil {
 		detail := err.(*exception.Exception)
-		if detail.Code != webhook.WebhookTransactionNotFound {
+		if detail.Code != exception.WebhookTransactionNotFound {
 			log.Println("Error finding transaction", err)
 			return err
 		}

@@ -14,9 +14,3 @@ type WebhookTransaction struct {
 	CreatedAt          time.Time `json:"createdAt"`
 	UpdatedAt          time.Time `json:"updatedAt"`
 }
-
-// Error codes
-const (
-	WebhookTransactionNotFound            = "WEBHOOK_TRANSACTION_NOT_FOUND"
-	WebhookTransactionNotificationTimeout = "WEBHOOK_TRANSACTION_NOTIFICATION_TIMEOUT"
-)
