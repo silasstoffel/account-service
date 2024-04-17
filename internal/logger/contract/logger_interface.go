@@ -1,10 +1,10 @@
 package loggerContract
 
 type Logger interface {
-	Info(message, data interface{})
-	Error(message, err error, data interface{})
-	Warn(message, data interface{})
-	Debug(message, data interface{})
+	Info(message string, data map[string]interface{})
+	Error(message string, err error, data map[string]interface{})
+	Warn(message string, data map[string]interface{})
+	Debug(message string, data map[string]interface{})
 }
 
 const (
