@@ -2,19 +2,22 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/silasstoffel/account-service/configs"
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	router "github.com/silasstoffel/account-service/internal/infra/http"
+	"github.com/silasstoffel/account-service/internal/logger"
 )
 
 func main() {
-	log.Println("Starting account-service REST API...")
 	config := configs.NewConfigFromEnvVars()
+	log := logger.NewLogger(config)
+
+	log.Info("Starting account-service REST API...", nil)
+
 	cnx, err := database.OpenConnection(config)
 	if err != nil {
-		log.Fatalf("Failed to open connection to database: %v", err)
+		log.Error("Failed to open connection to database", err, nil)
 		return
 	}
 	routes := router.BuildRouter(config, cnx)
