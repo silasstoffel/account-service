@@ -33,7 +33,7 @@ func (repository *WebhookTransactionRepository) FindById(id string) (webhook.Web
 	if err := scanTransactions(row, &transaction); err != nil {
 		log.Println("Error when finding transactions by id.", err)
 		if err == sql.ErrNoRows {
-			return transaction, exception.New(webhook.WebhookTransactionNotFound, &err)
+			return transaction, exception.New(exception.WebhookTransactionNotFound, &err)
 		}
 		return transaction, exception.NewDbCommandError(&err)
 	}

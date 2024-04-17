@@ -34,7 +34,7 @@ func (ref *AuthParams) AuthenticateUseCase(data *AuthInput) (*AuthOutput, error)
 
 	if err != nil {
 		detail := err.(*exception.Exception)
-		if detail.Code != domain.AccountNotFound {
+		if detail.Code != exception.AccountNotFound {
 			message := "Error when find account by e-mail"
 			log.Println(message, err)
 			return nil, exception.New(exception.UnknownError, &err)

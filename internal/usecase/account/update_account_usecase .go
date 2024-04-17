@@ -32,7 +32,7 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 		account, err = ref.AccountRepository.FindByEmail(input.Email)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			if detail.Code != accountDomain.AccountNotFound {
+			if detail.Code != exception.AccountNotFound {
 				return exception.New(exception.UnknownError, &err)
 			}
 		}
@@ -46,7 +46,7 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 		account, err = ref.AccountRepository.FindByPhone(input.Phone)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			if detail.Code != accountDomain.AccountNotFound {
+			if detail.Code != exception.AccountNotFound {
 				return exception.New(exception.UnknownError, &err)
 			}
 		}

@@ -31,7 +31,7 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 	account, err = ref.AccountRepository.FindByEmail(input.Email)
 	if err != nil {
 		detail := err.(*exception.Exception)
-		if detail.Code != accountDomain.AccountNotFound {
+		if detail.Code != exception.AccountNotFound {
 			return exception.NewUnknownError(&err)
 		}
 	}
@@ -43,7 +43,7 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 	account, err = ref.AccountRepository.FindByPhone(input.Phone)
 	if err != nil {
 		detail := err.(*exception.Exception)
-		if detail.Code != accountDomain.AccountNotFound {
+		if detail.Code != exception.AccountNotFound {
 			return exception.NewUnknownError(&err)
 		}
 	}
