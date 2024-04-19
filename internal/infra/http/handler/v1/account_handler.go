@@ -19,13 +19,14 @@ import (
 var accountRepository *database.AccountRepository
 var messagingProducer *messaging.MessagingProducer
 var accountPermissionRepository *database.AccountPermissionRepository
+var accountUseCase *usecase.AccountUseCase
 
 func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
 	logger := logger.NewLogger(config)
 	accountRepository = database.NewAccountRepository(db, logger)
 	accountPermissionRepository = database.NewAccountPermissionRepository(db, logger)
-
 	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
+	accountUseCase = usecase.NewAccountUseCase(accountRepository, accountPermissionRepository, messagingProducer, logger)
 
 	permissions := map[string]string{
 		"GET|/v1/accounts/":    "account-service:list-accounts,account-service:*",
@@ -85,11 +86,6 @@ func getAccount() gin.HandlerFunc {
 
 func createAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		createAccount := usecase.CreateAccount{
-			AccountRepository:           accountRepository,
-			AccountPermissionRepository: accountPermissionRepository,
-			Messaging:                   messagingProducer,
-		}
 		var input usecase.CreateAccountInput
 
 		if err := c.BindJSON(&input); err != nil {
@@ -97,7 +93,7 @@ func createAccount() gin.HandlerFunc {
 			return
 		}
 
-		account, err := createAccount.CreateAccountUseCase(input)
+		account, err := accountUseCase.CreateAccountUseCase(input)
 		if err != nil {
 			detail := err.(*exception.Exception)
 			c.JSON(detail.StatusCode, detail)
@@ -110,11 +106,6 @@ func createAccount() gin.HandlerFunc {
 
 func updateAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		updateAccountInstance := usecase.UpdateAccount{
-			AccountRepository:           accountRepository,
-			Messaging:                   messagingProducer,
-			AccountPermissionRepository: accountPermissionRepository,
-		}
 		var input usecase.UpdateAccountInput
 
 		if err := c.BindJSON(&input); err != nil {
@@ -122,7 +113,7 @@ func updateAccount() gin.HandlerFunc {
 			return
 		}
 
-		account, err := updateAccountInstance.UpdateAccountUseCase(c.Param("id"), input)
+		account, err := accountUseCase.UpdateAccountUseCase(c.Param("id"), input)
 		if err != nil {
 			detail := err.(*exception.Exception)
 			c.JSON(detail.StatusCode, detail)

@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"log"
-
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
@@ -18,13 +16,7 @@ type UpdateAccountInput struct {
 	Permissions []string
 }
 
-type UpdateAccount struct {
-	AccountRepository           accountDomain.AccountRepository
-	Messaging                   event.EventProducer
-	AccountPermissionRepository accountDomain.AccountPermissionRepository
-}
-
-func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string) error {
+func (ref *AccountUseCase) checkUpdateInput(input UpdateAccountInput, accountId string) error {
 	var account accountDomain.Account
 	var err error
 
@@ -59,11 +51,11 @@ func (ref *UpdateAccount) checkInput(input UpdateAccountInput, accountId string)
 	return nil
 }
 
-func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInput) (accountDomain.Account, error) {
+func (ref *AccountUseCase) UpdateAccountUseCase(id string, input UpdateAccountInput) (accountDomain.Account, error) {
 	const loggerPrefix = "[update-account-usecase]"
 
-	if err := ref.checkInput(input, id); err != nil {
-		log.Println(loggerPrefix, "Error when creating password", "id:", id, "Detail:", err.Error())
+	if err := ref.checkUpdateInput(input, id); err != nil {
+		ref.Logger.Error(loggerPrefix+"Error when creating password", err, nil)
 		return accountDomain.Account{}, err
 	}
 
@@ -72,7 +64,7 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 		var err error
 		pwd, err = service.CreateHash(input.Password)
 		if err != nil {
-			log.Println(loggerPrefix, "Error when creating password", "id:", id, "Detail:", err.Error())
+			ref.Logger.Error(loggerPrefix+"Error creating password hash", err, nil)
 			return accountDomain.Account{}, err
 		}
 	}
@@ -88,13 +80,13 @@ func (ref *UpdateAccount) UpdateAccountUseCase(id string, input UpdateAccountInp
 	updatedAccount, err := ref.AccountRepository.Update(id, account)
 
 	if err != nil {
-		log.Println(loggerPrefix, "Error when updating account", "id:", id, "Detail:", err.Error())
+		ref.Logger.Error(loggerPrefix+"Error when updating account", err, nil)
 		return accountDomain.Account{}, err
 	}
 
 	permissions, err := createAccountPermissions(input.Permissions, updatedAccount.Id, ref.AccountPermissionRepository)
 	if err != nil {
-		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
+		ref.Logger.Error(loggerPrefix+"Error when creating account", err, nil)
 		return accountDomain.Account{}, err
 	}
 	updatedAccount.Permissions = permissions

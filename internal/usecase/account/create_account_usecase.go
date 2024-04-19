@@ -1,11 +1,10 @@
 package usecase
 
 import (
-	"log"
-
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 	"github.com/silasstoffel/account-service/internal/service"
 )
 
@@ -18,13 +17,28 @@ type CreateAccountInput struct {
 	Permissions []string
 }
 
-type CreateAccount struct {
+type AccountUseCase struct {
 	AccountRepository           accountDomain.AccountRepository
 	AccountPermissionRepository accountDomain.AccountPermissionRepository
 	Messaging                   event.EventProducer
+	Logger                      loggerContract.Logger
 }
 
-func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
+func NewAccountUseCase(
+	accountRepository accountDomain.AccountRepository,
+	accountPermissionRepository accountDomain.AccountPermissionRepository,
+	messaging event.EventProducer,
+	logger loggerContract.Logger,
+) *AccountUseCase {
+	return &AccountUseCase{
+		AccountRepository:           accountRepository,
+		AccountPermissionRepository: accountPermissionRepository,
+		Messaging:                   messaging,
+		Logger:                      logger,
+	}
+}
+
+func (ref *AccountUseCase) checkInput(input CreateAccountInput) error {
 	var account accountDomain.Account
 	var err error
 
@@ -55,7 +69,7 @@ func (ref *CreateAccount) checkInput(input CreateAccountInput) error {
 	return nil
 }
 
-func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accountDomain.Account, error) {
+func (ref *AccountUseCase) CreateAccountUseCase(input CreateAccountInput) (accountDomain.Account, error) {
 	const loggerPrefix = "[create-account-usecase]"
 
 	if err := ref.checkInput(input); err != nil {
@@ -64,7 +78,7 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 
 	pwd, err := service.CreateHash(input.Password)
 	if err != nil {
-		log.Println(loggerPrefix, "Error creating password hash", "detail:", err)
+		ref.Logger.Error(loggerPrefix+"Error creating password hash", err, nil)
 		return accountDomain.Account{}, err
 	}
 
@@ -81,13 +95,13 @@ func (ref *CreateAccount) CreateAccountUseCase(input CreateAccountInput) (accoun
 	createdAccount, err := ref.AccountRepository.Create(account)
 
 	if err != nil {
-		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
+		ref.Logger.Error(loggerPrefix+"Error when creating account", err, nil)
 		return accountDomain.Account{}, err
 	}
 
 	permissions, err := createAccountPermissions(input.Permissions, createdAccount.Id, ref.AccountPermissionRepository)
 	if err != nil {
-		log.Println(loggerPrefix, "Error when creating account. Detail:", err)
+		ref.Logger.Error(loggerPrefix+"Error when creating account", err, nil)
 		return accountDomain.Account{}, err
 	}
 	createdAccount.Permissions = permissions
@@ -115,15 +129,11 @@ func createAccountPermissions(
 			}
 			err := accountPermissionRepository.Create(p)
 			if err != nil {
-				message := "Error when creating account permission"
-				log.Println(message, "Detail:", err)
 				return nil, exception.New(exception.DbCommandError, &err)
 			}
 		}
 		createdPermissions, err = accountPermissionRepository.FindByAccountId(accountId)
 		if err != nil {
-			message := "Error when querying account permission"
-			log.Println(message, "Detail:", err)
 			return nil, exception.New(exception.DbCommandError, &err)
 		}
 	}
