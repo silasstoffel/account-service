@@ -3,20 +3,22 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/silasstoffel/account-service/internal/domain/webhook"
 	"github.com/silasstoffel/account-service/internal/exception"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 )
 
 type WebhookTransactionRepository struct {
-	Db *sql.DB
+	Db     *sql.DB
+	Logger loggerContract.Logger
 }
 
-func NewWebhookTransactionRepository(db *sql.DB) *WebhookTransactionRepository {
+func NewWebhookTransactionRepository(db *sql.DB, logger loggerContract.Logger) *WebhookTransactionRepository {
 	return &WebhookTransactionRepository{
-		Db: db,
+		Db:     db,
+		Logger: logger,
 	}
 }
 
@@ -31,10 +33,12 @@ func (repository *WebhookTransactionRepository) FindById(id string) (webhook.Web
 
 	row := repository.Db.QueryRow(stmt, id)
 	if err := scanTransactions(row, &transaction); err != nil {
-		log.Println("Error when finding transactions by id.", err)
 		if err == sql.ErrNoRows {
 			return transaction, exception.New(exception.WebhookTransactionNotFound, &err)
 		}
+		repository.Logger.Error("Error when finding transactions by id", err, map[string]interface{}{
+			"id": id,
+		})
 		return transaction, exception.NewDbCommandError(&err)
 	}
 
@@ -72,8 +76,7 @@ func (repository *WebhookTransactionRepository) Create(transaction webhook.Webho
 	)
 
 	if err != nil {
-		message := "Error when creating webhook transaction"
-		log.Println(message, err)
+		repository.Logger.Error("Error when creating webhook transaction", err, nil)
 		return transaction, exception.NewDbCommandError(&err)
 	}
 
@@ -83,7 +86,7 @@ func (repository *WebhookTransactionRepository) Create(transaction webhook.Webho
 func (repository *WebhookTransactionRepository) Update(id string, transaction webhook.UpdateTransactionInput) (webhook.WebhookTransaction, error) {
 	toUpdate, err := (repository).FindById(id)
 	if err != nil {
-		log.Println("Error when finding transaction", id, "Detail", err)
+		repository.Logger.Error("Error when finding transaction", err, nil)
 		return toUpdate, err
 	}
 
@@ -107,7 +110,10 @@ func (repository *WebhookTransactionRepository) Update(id string, transaction we
 
 	if err != nil {
 		message := "Error when updating webhook transactions"
-		log.Println(loggerPrefix, message, "id:", id, "eventId:", toUpdate.EventId, err)
+		repository.Logger.Error(message, err, map[string]interface{}{
+			"id":      id,
+			"eventId": toUpdate.EventId,
+		})
 		return toUpdate, exception.NewDbCommandError(&err)
 	}
 

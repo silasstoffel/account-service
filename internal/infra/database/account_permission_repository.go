@@ -4,19 +4,21 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 )
 
 type AccountPermissionRepository struct {
-	Db *sql.DB
+	Db     *sql.DB
+	Logger loggerContract.Logger
 }
 
-func NewAccountPermissionRepository(db *sql.DB) *AccountPermissionRepository {
+func NewAccountPermissionRepository(db *sql.DB, logger loggerContract.Logger) *AccountPermissionRepository {
 	return &AccountPermissionRepository{
-		Db: db,
+		Db:     db,
+		Logger: logger,
 	}
 }
 
@@ -58,7 +60,7 @@ func (repository *AccountPermissionRepository) Create(data domain.CreateAccountP
 
 	if err != nil {
 		message := "Error when creating account permission"
-		log.Println(message, "Detail:", err)
+		repository.Logger.Error(message, err, nil)
 		return exception.New(exception.DbCommandError, &err)
 	}
 
@@ -71,7 +73,7 @@ func (repository *AccountPermissionRepository) DeleteByAccount(accountId string)
 
 	if err != nil {
 		message := "Error when deleting account permission"
-		log.Println(message, "Detail:", err)
+		repository.Logger.Error(message, err, nil)
 		return exception.New(exception.DbCommandError, &err)
 	}
 
@@ -83,7 +85,7 @@ func (repository *AccountPermissionRepository) FindByAccountId(accountId string)
 	rows, err := repository.Db.Query(query, accountId)
 	if err != nil {
 		message := "Error when querying account permission"
-		log.Println(message, "Detail:", err)
+		repository.Logger.Error(message, err, nil)
 		return nil, exception.New(exception.DbCommandError, &err)
 	}
 	defer rows.Close()

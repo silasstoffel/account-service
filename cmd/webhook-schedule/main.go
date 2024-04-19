@@ -16,6 +16,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
+	"github.com/silasstoffel/account-service/internal/logger"
 )
 
 var message event.Event
@@ -63,8 +64,8 @@ func main() {
 		sqsClient: scheduleSenderConfig,
 		queueUrl:  config.Aws.WebhookSenderQueueUrl,
 	}
-
-	subscriptionRepository := database.NewSubscriptionRepository(cnx)
+	logger := logger.NewLogger(config)
+	subscriptionRepository := database.NewSubscriptionRepository(cnx, logger)
 	messageChannel := make(chan *types.Message)
 
 	go consumer.PollingMessages(messageChannel)

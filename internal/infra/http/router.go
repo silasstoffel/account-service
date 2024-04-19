@@ -10,6 +10,7 @@ import (
 	v1handler "github.com/silasstoffel/account-service/internal/infra/http/handler/v1"
 	"github.com/silasstoffel/account-service/internal/infra/http/middleware"
 	"github.com/silasstoffel/account-service/internal/infra/service/token"
+	"github.com/silasstoffel/account-service/internal/logger"
 )
 
 func BuildRouter(config *configs.Config, db *sql.DB) *gin.Engine {
@@ -25,7 +26,8 @@ func BuildRouter(config *configs.Config, db *sql.DB) *gin.Engine {
 		EmittedBy:        "account-service",
 		ExpiresInMinutes: 60,
 	}
-	accountPermissionRepository := database.NewAccountPermissionRepository(db)
+	logger := logger.NewLogger(config)
+	accountPermissionRepository := database.NewAccountPermissionRepository(db, logger)
 
 	verifyToken := middleware.NewVerifyTokenMiddleware(tokenManagerService, accountPermissionRepository)
 

@@ -4,19 +4,21 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 )
 
 type PermissionRepository struct {
-	Db *sql.DB
+	Db     *sql.DB
+	Logger loggerContract.Logger
 }
 
-func NewPermissionRepository(db *sql.DB) *PermissionRepository {
+func NewPermissionRepository(db *sql.DB, logger loggerContract.Logger) *PermissionRepository {
 	return &PermissionRepository{
-		Db: db,
+		Db:     db,
+		Logger: logger,
 	}
 }
 
@@ -53,8 +55,8 @@ func (repository *PermissionRepository) List(input domain.ListPermissionInput) (
 	lp := "[permission-repository][list]"
 
 	if err != nil {
-		message := "Failure when querying permission"
-		log.Println(lp, message, err)
+		message := lp + " Failure when querying permission"
+		repository.Logger.Error(message, err, nil)
 		return nil, exception.NewUnknownError(&err)
 	}
 	defer rows.Close()
@@ -64,7 +66,7 @@ func (repository *PermissionRepository) List(input domain.ListPermissionInput) (
 		var data domain.Permission
 		err := scanPermissionRow(rows, &data)
 		if err != nil {
-			log.Println(lp, "Failure when scan permission", err)
+			repository.Logger.Error(lp+" Failure when scan permission", err, nil)
 			return nil, err
 		}
 		result = append(result, &data)

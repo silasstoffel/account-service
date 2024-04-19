@@ -15,6 +15,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
+	"github.com/silasstoffel/account-service/internal/logger"
 )
 
 type subscriptionMessageDetail struct {
@@ -60,8 +61,8 @@ func main() {
 	consumer := messaging.NewMessagingConsumer(config.Aws.WebhookSenderQueueUrl, snsClient)
 	consumer.VisibilityTimeout = 45
 	consumer.WaitTimeSeconds = 10
-
-	transactionRepository = database.NewWebhookTransactionRepository(cnx)
+	logger := logger.NewLogger(config)
+	transactionRepository = database.NewWebhookTransactionRepository(cnx, logger)
 
 	messageChannel := make(chan *types.Message)
 

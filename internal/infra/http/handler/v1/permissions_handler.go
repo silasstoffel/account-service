@@ -8,12 +8,14 @@ import (
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/database"
+	"github.com/silasstoffel/account-service/internal/logger"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/permission"
 	"github.com/silasstoffel/account-service/internal/utility"
 )
 
 func GetPermissionHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
-	var permissionsRepository = database.NewPermissionRepository(db)
+	logger := logger.NewLogger(config)
+	var permissionsRepository = database.NewPermissionRepository(db, logger)
 	var permissionUseCase = usecase.NewPermissionUseCase(permissionsRepository)
 
 	group := router.Group("/permissions")

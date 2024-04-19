@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -12,17 +11,20 @@ import (
 	accountDomain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 )
 
 const loggerPrefix = "[account-repository]"
 
 type AccountRepository struct {
-	Db *sql.DB
+	Db     *sql.DB
+	Logger loggerContract.Logger
 }
 
-func NewAccountRepository(db *sql.DB) *AccountRepository {
+func NewAccountRepository(db *sql.DB, logger loggerContract.Logger) *AccountRepository {
 	return &AccountRepository{
-		Db: db,
+		Db:     db,
+		Logger: logger,
 	}
 }
 
@@ -51,7 +53,7 @@ func (repository *AccountRepository) Create(account accountDomain.Account) (acco
 	)
 
 	if err != nil {
-		log.Println(loggerPrefix, "Error when creating account", err.Error())
+		repository.Logger.Error("Error when creating account", err, nil)
 		return account, exception.New(exception.DbCommandError, &err)
 	}
 
@@ -68,7 +70,7 @@ func (repository *AccountRepository) FindByEmail(email string) (accountDomain.Ac
 	row := repository.Db.QueryRow(stmt, email)
 	err := scanRow(row, &account)
 	if err != nil {
-		log.Println(loggerPrefix, "Error find account by email. Detail", err.Error())
+		repository.Logger.Error("Error find account by email", err, nil)
 		if err == sql.ErrNoRows {
 			return account, exception.New(exception.AccountNotFound, &err)
 		}
@@ -78,7 +80,6 @@ func (repository *AccountRepository) FindByEmail(email string) (accountDomain.Ac
 }
 
 func (repository *AccountRepository) FindByPhone(phone string) (accountDomain.Account, error) {
-	log.Println(loggerPrefix, "Finding account by phone")
 	var account accountDomain.Account
 
 	stmt := `SELECT id, name, last_name, email, phone, created_at, updated_at, active, full_name, COALESCE(hashed_pwd, '')
@@ -88,15 +89,13 @@ func (repository *AccountRepository) FindByPhone(phone string) (accountDomain.Ac
 	row := repository.Db.QueryRow(stmt, phone)
 	err := scanRow(row, &account)
 	if err != nil {
-		log.Println(loggerPrefix, "Error find account by phone. Detail", err.Error())
 		if err == sql.ErrNoRows {
-			log.Println(loggerPrefix, "There is no row to return")
 			return account, exception.New(exception.AccountNotFound, &err)
 		}
+		repository.Logger.Error("Error find account by phone", err, nil)
 		return account, exception.New(exception.DbCommandError, &err)
 	}
 
-	log.Println(loggerPrefix, "Account found with id", account.Id)
 	return account, nil
 }
 
@@ -117,7 +116,7 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 	rows, err := repository.Db.Query(stmt, limit, offset)
 	var accounts []accountDomain.Account
 	if err != nil {
-		log.Println(loggerPrefix, "error when execute command on database.", err.Error())
+		repository.Logger.Error("Error when list account", err, nil)
 		return accounts, exception.New(exception.DbCommandError, &err)
 	}
 
@@ -125,7 +124,7 @@ func (repository *AccountRepository) List(input accountDomain.ListAccountInput) 
 	for rows.Next() {
 		var account accountDomain.Account
 		if err := scanRow(rows, &account); err != nil {
-			log.Println(loggerPrefix, "error when scan result", err.Error())
+			repository.Logger.Error("Error when scan result", err, nil)
 			return accounts, exception.New(exception.DbCommandError, &err)
 		}
 		accounts = append(accounts, account)
@@ -143,10 +142,10 @@ func (repository *AccountRepository) FindById(accountId string) (accountDomain.A
 	row := repository.Db.QueryRow(stmt, accountId)
 
 	if err := scanRow(row, &account); err != nil {
-		log.Println(loggerPrefix, "Error when finding account by id.", err.Error())
 		if err == sql.ErrNoRows {
 			return account, exception.New(exception.AccountNotFound, &err)
 		}
+		repository.Logger.Error("Error when finding account by id", err, nil)
 		return account, exception.New(exception.DbCommandError, &err)
 	}
 	return account, nil
@@ -155,7 +154,7 @@ func (repository *AccountRepository) FindById(accountId string) (accountDomain.A
 func (repository *AccountRepository) Update(id string, data accountDomain.Account) (accountDomain.Account, error) {
 	account, err := (repository).FindById(id)
 	if err != nil {
-		log.Println(loggerPrefix, "Error when finding account", id, "Detail", err.Error())
+		repository.Logger.Error("Error when finding account", err, nil)
 		return account, err
 	}
 
@@ -208,10 +207,9 @@ func (repository *AccountRepository) Update(id string, data accountDomain.Accoun
 	query := fmt.Sprintf("UPDATE accounts SET %s WHERE id = $%s", cols, strconv.Itoa(argCount))
 	account.UpdatedAt = now
 
-	log.Println(loggerPrefix, "Updating account", id, "query:", query)
 	_, err = repository.Db.Exec(query, args...)
 	if err != nil {
-		log.Println(loggerPrefix, "Error when updating account", id, err.Error())
+		repository.Logger.Error("Error when updating account", err, nil)
 		return account, exception.New(exception.DbCommandError, &err)
 	}
 

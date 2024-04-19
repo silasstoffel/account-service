@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/lib/pq"
 	"github.com/silasstoffel/account-service/configs"
@@ -22,8 +21,6 @@ func OpenConnection(config *configs.Config) (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", dataSourceName)
 	if err != nil {
-		message := "Failed to open connection to database"
-		log.Println(message, "Details:", err)
 		return nil, exception.New(exception.UnknownError, &err)
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/database"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
+	"github.com/silasstoffel/account-service/internal/logger"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/event"
 )
 
@@ -41,8 +42,9 @@ func main() {
 	}
 	defer cnx.Close()
 
+	logger := logger.NewLogger(config)
 	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
-	eventRepository := database.NewEventRepository(cnx)
+	eventRepository := database.NewEventRepository(cnx, logger)
 
 	createEventUseCase := usecase.CreateEventUseCase{
 		EventRepository: eventRepository,

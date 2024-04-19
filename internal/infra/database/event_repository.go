@@ -2,19 +2,21 @@ package database
 
 import (
 	"database/sql"
-	"log"
 
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 )
 
 type EventRepository struct {
-	Db *sql.DB
+	Db     *sql.DB
+	Logger loggerContract.Logger
 }
 
-func NewEventRepository(db *sql.DB) *EventRepository {
+func NewEventRepository(db *sql.DB, logger loggerContract.Logger) *EventRepository {
 	return &EventRepository{
-		Db: db,
+		Db:     db,
+		Logger: logger,
 	}
 }
 
@@ -31,8 +33,7 @@ func (repository *EventRepository) Create(event event.Event) error {
 	)
 
 	if err != nil {
-		lp := "[event-repository]"
-		log.Println(lp, "Error when create event", err.Error())
+		repository.Logger.Error("Error when create event", err, nil)
 		return exception.New(exception.DbCommandError, &err)
 	}
 

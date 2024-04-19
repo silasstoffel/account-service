@@ -12,20 +12,22 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/http/middleware"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
 	"github.com/silasstoffel/account-service/internal/infra/service/token"
+	"github.com/silasstoffel/account-service/internal/logger"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/auth"
 )
 
 var authUseCaseParams *usecase.AuthParams
 
 func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
+	logger := logger.NewLogger(config)
 	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
 	tokenManagerService := &token.TokenService{
 		Secret:           config.AuthSecret,
-		EmittedBy:        "account-service",
+		EmittedBy:        config.App.AppName,
 		ExpiresInMinutes: 60,
 	}
-	accountRepository := database.NewAccountRepository(db)
-	accountPermissionRepository := database.NewAccountPermissionRepository(db)
+	accountRepository := database.NewAccountRepository(db, logger)
+	accountPermissionRepository := database.NewAccountPermissionRepository(db, logger)
 	authUseCaseParams = &usecase.AuthParams{
 		AccountRepository:           accountRepository,
 		AccountPermissionRepository: accountPermissionRepository,

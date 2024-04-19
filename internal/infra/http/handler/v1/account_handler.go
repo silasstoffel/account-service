@@ -11,6 +11,7 @@ import (
 	"github.com/silasstoffel/account-service/internal/infra/helper"
 	"github.com/silasstoffel/account-service/internal/infra/http/middleware"
 	"github.com/silasstoffel/account-service/internal/infra/messaging"
+	"github.com/silasstoffel/account-service/internal/logger"
 	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 	"github.com/silasstoffel/account-service/internal/utility"
 )
@@ -20,8 +21,9 @@ var messagingProducer *messaging.MessagingProducer
 var accountPermissionRepository *database.AccountPermissionRepository
 
 func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
-	accountRepository = database.NewAccountRepository(db)
-	accountPermissionRepository = database.NewAccountPermissionRepository(db)
+	logger := logger.NewLogger(config)
+	accountRepository = database.NewAccountRepository(db, logger)
+	accountPermissionRepository = database.NewAccountPermissionRepository(db, logger)
 
 	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
 
