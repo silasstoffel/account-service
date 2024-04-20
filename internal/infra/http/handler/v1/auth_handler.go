@@ -33,8 +33,13 @@ func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
 		AccountPermissionRepository: accountPermissionRepository,
 		Messaging:                   messagingProducer,
 		TokenService:                tokenManagerService,
+		Logger:                      logger,
 	}
-	verifyToken := middleware.NewVerifyTokenMiddleware(tokenManagerService, accountPermissionRepository)
+	verifyToken := middleware.NewVerifyTokenMiddleware(
+		tokenManagerService,
+		accountPermissionRepository,
+		logger,
+	)
 	router.POST("/auth", auth())
 	router.GET("/auth/verify", verifyToken.VerifyTokenMiddleware, verify(accountRepository, accountPermissionRepository))
 }

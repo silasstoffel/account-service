@@ -29,7 +29,11 @@ func BuildRouter(config *configs.Config, db *sql.DB) *gin.Engine {
 	logger := logger.NewLogger(config)
 	accountPermissionRepository := database.NewAccountPermissionRepository(db, logger)
 
-	verifyToken := middleware.NewVerifyTokenMiddleware(tokenManagerService, accountPermissionRepository)
+	verifyToken := middleware.NewVerifyTokenMiddleware(
+		tokenManagerService,
+		accountPermissionRepository,
+		logger,
+	)
 
 	// protected routes
 	v1Group := route.Group("/v1")

@@ -16,7 +16,7 @@ import (
 func GetPermissionHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
 	logger := logger.NewLogger(config)
 	var permissionsRepository = database.NewPermissionRepository(db, logger)
-	var permissionUseCase = usecase.NewPermissionUseCase(permissionsRepository)
+	var permissionUseCase = usecase.NewPermissionUseCase(permissionsRepository, logger)
 
 	group := router.Group("/permissions")
 	group.GET("/", func(c *gin.Context) {

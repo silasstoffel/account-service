@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,18 +34,19 @@ type scheduleMessageInput struct {
 }
 
 func main() {
-	log.Println("Starting webhook schedule consumer")
 	config := configs.NewConfigFromEnvVars()
+	logger := logger.NewLoggerWithService(config, "webhook-schedule")
+	logger.Info("Starting webhook schedule consumer", nil)
 	awsConfig, err := helper.BuildAwsConfig(config)
 	if err != nil {
-		log.Println("Error creating aws config", err)
+		logger.Error("Error creating aws config", err, nil)
 		panic(err)
 	}
 
 	cnx, err := database.OpenConnection(config)
 	if err != nil {
-		log.Fatalf("Failed to open connection to database: %v", err)
-		return
+		logger.Error("Failed to open connection to database", err, nil)
+		panic(err)
 	}
 	defer cnx.Close()
 
@@ -64,44 +64,44 @@ func main() {
 		sqsClient: scheduleSenderConfig,
 		queueUrl:  config.Aws.WebhookSenderQueueUrl,
 	}
-	logger := logger.NewLogger(config)
 	subscriptionRepository := database.NewSubscriptionRepository(cnx, logger)
 	messageChannel := make(chan *types.Message)
 
 	go consumer.PollingMessages(messageChannel)
 
 	for rawMessage := range messageChannel {
-		fmt.Println("Processing message", *rawMessage.MessageId)
+		ld := map[string]interface{}{"messageId": *rawMessage.MessageId}
+		logger.Info("Processing message", ld)
 		err := messaging.ExtractMessageFromTopic(rawMessage, &message)
 		if err != nil {
-			fmt.Println("Error parsing message", err)
+			logger.Error("Error parsing or extract message", err, ld)
 			continue
 		}
 
 		var event event.Event
 		if err := dataMessageToEvent(&message.Data, &event); err != nil {
-			fmt.Println("Error when convert message to event", err)
+			logger.Error("Error when convert message to event", err, ld)
 			continue
 		}
 
 		subscriptions, err := subscriptionRepository.GetByEventType(event.Type)
 		if err != nil {
-			fmt.Println("Error when get subscriptions to schedule", err)
+			logger.Error("Error when get subscriptions to schedule", err, ld)
 			continue
 		}
 
 		messageBatch, err := buildMessageBatch(subscriptions, event)
 		if err != nil {
-			fmt.Println("Error when build message batch", err)
+			logger.Error("Error when build message batch", err, ld)
 			continue
 		}
 		err = scheduleSender.schedule(messageBatch)
 		if err != nil {
-			fmt.Println("Error when schedule messaging", err)
+			logger.Error("Error when schedule messaging", err, ld)
 			continue
 		}
 		consumer.DeleteMessage(*rawMessage.ReceiptHandle)
-		fmt.Println("Processed message:", *rawMessage.MessageId)
+		logger.Info("Processed message", ld)
 	}
 }
 
@@ -120,8 +120,6 @@ func buildMessageBatch(subscriptions []webhook.Subscription, event event.Event) 
 		messageBody, err := json.Marshal(data)
 
 		if err != nil {
-			detail := "Error when convert event payload to json."
-			log.Println(detail, "Detail", err.Error())
 			return messageBatch, err
 		}
 
@@ -153,8 +151,6 @@ func (ref *sqsSender) schedule(entries []types.SendMessageBatchRequestEntry) err
 
 func dataMessageToEvent(message *string, event *event.Event) error {
 	if err := json.Unmarshal([]byte(*message), event); err != nil {
-		message := "Error when convert event payload to json."
-		log.Println(message, "Detail", err.Error())
 		return err
 	}
 	return nil

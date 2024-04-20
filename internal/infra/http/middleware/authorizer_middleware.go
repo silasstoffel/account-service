@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -22,7 +21,6 @@ func (ref *AuthorizerMiddlewareInstance) AuthorizerMiddleware(c *gin.Context) {
 	scopes := c.GetString("accountPermissions")
 	response := gin.H{"code": "INVALID_PERMISSIONS", "message": "Invalid permission"}
 	if len(scopes) == 0 || len(ref.Permissions) == 0 {
-		log.Println("no permissions", scopes)
 		c.AbortWithStatusJSON(http.StatusForbidden, response)
 		return
 	}

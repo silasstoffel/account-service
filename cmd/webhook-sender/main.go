@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -42,27 +41,30 @@ type notifyStats struct {
 
 var transactionRepository *database.WebhookTransactionRepository
 
+var log *logger.Logger
+
 func main() {
 	config := configs.NewConfigFromEnvVars()
+	log = logger.NewLoggerWithService(config, "webhook-sender")
+	log.Info("Starting webhook sender", nil)
 	awsConfig, err := helper.BuildAwsConfig(config)
 	if err != nil {
-		log.Println("Error creating aws config", err)
+		log.Error("Error creating aws config", err, nil)
 		panic(err)
 	}
 
 	cnx, err := database.OpenConnection(config)
 	if err != nil {
-		log.Fatalf("Failed to open connection to database: %v", err)
+		log.Error("Failed to open connection to database", err, nil)
 		return
 	}
 	defer cnx.Close()
 
 	snsClient := sqs.NewFromConfig(awsConfig)
-	consumer := messaging.NewMessagingConsumer(config.Aws.WebhookSenderQueueUrl, snsClient)
+	consumer := messaging.NewMessagingConsumer(config.Aws.WebhookSenderQueueUrl, snsClient, log)
 	consumer.VisibilityTimeout = 45
 	consumer.WaitTimeSeconds = 10
-	logger := logger.NewLogger(config)
-	transactionRepository = database.NewWebhookTransactionRepository(cnx, logger)
+	transactionRepository = database.NewWebhookTransactionRepository(cnx, log)
 
 	messageChannel := make(chan *types.Message)
 
@@ -71,11 +73,12 @@ func main() {
 	var message messageDetail
 	ttl := 3 * time.Second
 	for rawMessage := range messageChannel {
-		log.Println("Processing message", *rawMessage.MessageId)
+		det := map[string]interface{}{"messageId": *rawMessage.MessageId}
+		log.Info("Processing message", det)
 
 		err := messaging.ExtractMessageFromQueue(rawMessage, &message)
 		if err != nil {
-			log.Println("Error parsing message", err)
+			log.Error("Error parsing message", err, det)
 			continue
 		}
 
@@ -83,20 +86,20 @@ func main() {
 		stats, err := notify(message, ttl)
 		if err != nil {
 			detail := err.(*exception.Exception)
-			if detail.Code == webhook.WebhookTransactionNotificationTimeout {
+			if detail.Code == exception.WebhookTransactionNotificationTimeout {
 				delete = false
 			}
 		}
 
 		err = upsert(message, stats)
 		if err != nil {
-			log.Println("Error upserting transaction", err)
+			log.Error("Error upserting transaction", err, det)
 			continue
 		}
 		if delete {
 			consumer.DeleteMessage(*rawMessage.ReceiptHandle)
 		}
-		log.Println("Processed message:", *rawMessage.MessageId)
+		log.Info("Processed message", det)
 	}
 }
 
@@ -106,7 +109,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 	payload, err := json.Marshal(message)
 	if err != nil {
 		stats.finishedAt = time.Now().UTC()
-		log.Println("Error marshalling message on notify webhook", err)
+		log.Error("Error marshalling message on notify webhook", err, nil)
 		return stats, err
 	}
 
@@ -117,7 +120,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 	)
 	if err != nil {
 		stats.finishedAt = time.Now().UTC()
-		log.Println("Error creating request to notify webhook", err)
+		log.Error("Error creating request to notify webhook", err, nil)
 		return stats, err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -132,7 +135,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 		isTimeout := strings.Contains(err.Error(), "Client.Timeout")
 		if isTimeout {
 			message := "Webhook notification timeout"
-			log.Println(message, err.Error())
+			log.Error(message, err, nil)
 			return stats, exception.New(exception.WebhookTransactionNotificationTimeout, &err)
 		}
 		return stats, err
@@ -151,7 +154,7 @@ func upsert(message messageDetail, stats notifyStats) error {
 	if err != nil {
 		detail := err.(*exception.Exception)
 		if detail.Code != exception.WebhookTransactionNotFound {
-			log.Println("Error finding transaction", err)
+			log.Error("Error finding transaction", err, nil)
 			return err
 		}
 		createTransaction = true
@@ -170,7 +173,7 @@ func upsert(message messageDetail, stats notifyStats) error {
 		}
 		_, err := transactionRepository.Create(transaction)
 		if err != nil {
-			log.Println("Error when creating transaction", err)
+			log.Error("Error when creating transaction", err, nil)
 			return err
 		}
 		return nil
@@ -183,7 +186,7 @@ func upsert(message messageDetail, stats notifyStats) error {
 	})
 
 	if err != nil {
-		log.Println("Error when updating transaction", err)
+		log.Error("Error when updating transaction", err, nil)
 		return err
 	}
 

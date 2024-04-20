@@ -16,13 +16,12 @@ import (
 	"github.com/silasstoffel/account-service/internal/utility"
 )
 
-var webhookSubscriptionRepository webhook.SubscriptionRepository
 var WebHookSubscriptionUse usecase.WebHookSubscriptionUseCaseParams
 
 func GetWebHookSubscriptionHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
 	logger := logger.NewLogger(config)
-	webhookSubscriptionRepository = database.NewSubscriptionRepository(db, logger)
-	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
+	webhookSubscriptionRepository := database.NewSubscriptionRepository(db, logger)
+	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
 	WebHookSubscriptionUse = usecase.WebHookSubscriptionUseCaseParams{
 		Messaging:                     messagingProducer,
 		WebhookSubscriptionRepository: webhookSubscriptionRepository,

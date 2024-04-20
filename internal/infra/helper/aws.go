@@ -2,7 +2,6 @@ package helper
 
 import (
 	"context"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -24,8 +23,6 @@ func BuildAwsConfig(app *appConfig.Config) (cfg aws.Config, er error) {
 	}
 
 	if err != nil {
-		message := "Error when creating AWS client"
-		log.Println(message, err.Error())
 		return aws.Config{}, exception.NewUnknownError(&err)
 	}
 

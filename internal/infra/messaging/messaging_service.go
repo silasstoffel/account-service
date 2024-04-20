@@ -3,7 +3,7 @@ package messaging
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -16,25 +16,32 @@ import (
 	"github.com/silasstoffel/account-service/internal/event"
 	"github.com/silasstoffel/account-service/internal/exception"
 	"github.com/silasstoffel/account-service/internal/infra/helper"
+	loggerContract "github.com/silasstoffel/account-service/internal/logger/contract"
 )
 
-func NewMessagingProducer(topicArn, awsEndpoint string, config *appConfig.Config) *MessagingProducer {
+func NewMessagingProducer(topicArn, awsEndpoint string, config *appConfig.Config, logger loggerContract.Logger) *MessagingProducer {
 	return &MessagingProducer{
 		TopicArn:    topicArn,
 		AwsEndpoint: awsEndpoint,
 		Config:      config,
+		Logger:      logger,
 	}
 }
 
-func NewDefaultMessagingProducerFromConfig(config *appConfig.Config) *MessagingProducer {
-	return NewMessagingProducer(config.Aws.AccountServiceTopicArn, config.Aws.Endpoint, config)
+func NewDefaultMessagingProducerFromConfig(config *appConfig.Config, logger loggerContract.Logger) *MessagingProducer {
+	return NewMessagingProducer(
+		config.Aws.AccountServiceTopicArn,
+		config.Aws.Endpoint,
+		config,
+		logger,
+	)
 }
 
 func (ref *MessagingProducer) Publish(eventType string, data interface{}, source string) error {
 	prefix := "[messaging-service]"
 	awsConfig, err := helper.BuildAwsConfig(ref.Config)
 	if err != nil {
-		log.Println(prefix, "Error when build aws config.", err)
+		ref.Logger.Error("Error when build aws config.", err, nil)
 		return err
 	}
 	snsClient := sns.NewFromConfig(awsConfig)
@@ -42,7 +49,7 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	dataAsJson, err := json.Marshal(data)
 	if err != nil {
 		message := "Error when convert event payload to json."
-		log.Println(prefix, message, "Detail", err.Error())
+		ref.Logger.Error(message, err, nil)
 		return exception.New(exception.ErrorConvertMessageToJson, &err)
 	}
 
@@ -80,7 +87,7 @@ func (ref *MessagingProducer) Publish(eventType string, data interface{}, source
 	_, err = snsClient.Publish(context.TODO(), publishInput)
 	if err != nil {
 		message := "Error to publish event on topic."
-		log.Println(prefix, message, "Detail", err.Error())
+		ref.Logger.Error(fmt.Sprintf("%s %s", prefix, message), err, nil)
 		return exception.New(exception.ErrorConvertMessageToJson, &err)
 	}
 
@@ -98,7 +105,9 @@ func (ref *MessagingConsumer) PollingMessages(messageChannel chan<- *sqsType.Mes
 		})
 
 		if err != nil {
-			log.Printf(prefix, "Couldn't get messages from queue %v. Here's why: %v\n", ref.QueueUrl, err)
+			ref.Logger.Error(prefix+"Couldn't get messages from queue.", err, map[string]interface{}{
+				"queueUrl": ref.QueueUrl,
+			})
 			continue
 		}
 
@@ -116,7 +125,9 @@ func (ref *MessagingConsumer) DeleteMessage(receiptHandle string) error {
 	})
 
 	if err != nil {
-		log.Printf(prefix, "Couldn't delete message from queue %v. Here's why: %v\n", ref.QueueUrl, err)
+		ref.Logger.Error(prefix+" Couldn't delete message from queue.", err, map[string]interface{}{
+			"queueUrl": ref.QueueUrl,
+		})
 	}
 
 	return err

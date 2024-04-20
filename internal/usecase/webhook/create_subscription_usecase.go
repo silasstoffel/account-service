@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"log"
-
 	"github.com/silasstoffel/account-service/internal/domain/webhook"
 	"github.com/silasstoffel/account-service/internal/event"
 )
@@ -10,7 +8,7 @@ import (
 func (ref *WebHookSubscriptionUseCaseParams) CreateSubscriptionUseCase(input webhook.CreateSubscriptionInput) (*webhook.Subscription, error) {
 	subs, err := ref.WebhookSubscriptionRepository.Create(input)
 	if err != nil {
-		log.Println("Error when create subscription", err)
+		ref.Logger.Error("[create-subscription-usecase] Error when creating subscription", err, nil)
 		return nil, err
 	}
 

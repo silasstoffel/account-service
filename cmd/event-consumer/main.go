@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -18,11 +17,12 @@ import (
 var message event.Event
 
 func main() {
-	log.Println("Starting events consumer")
 	config := configs.NewConfigFromEnvVars()
+	logger := logger.NewLogger(config)
+	logger.Info("Starting events consumer", nil)
 	awsConfig, err := helper.BuildAwsConfig(config)
 	if err != nil {
-		log.Println("Error creating aws config", err)
+		logger.Error("Error creating aws config", err, nil)
 		panic(err)
 	}
 
@@ -37,13 +37,12 @@ func main() {
 
 	cnx, err := database.OpenConnection(config)
 	if err != nil {
-		log.Fatalf("Failed to open connection to database: %v", err)
-		return
+		logger.Error("Failed to open connection to database", err, nil)
+		panic(err)
 	}
 	defer cnx.Close()
 
-	logger := logger.NewLogger(config)
-	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
+	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config, logger)
 	eventRepository := database.NewEventRepository(cnx, logger)
 
 	createEventUseCase := usecase.CreateEventUseCase{
@@ -57,16 +56,19 @@ func main() {
 	for rawMessage := range messageChannel {
 		err = messaging.ExtractMessageFromTopic(rawMessage, &message)
 		if err != nil {
-			fmt.Println("Error parsing or extract message", err)
+			logger.Error("Error parsing or extract message", err, nil)
 			continue
 		}
 
 		err = createEventUseCase.CreateEventUseCase(message)
 		if err != nil {
-			log.Println("Error creating event", err)
+			logger.Error("Error creating event", err, nil)
 			continue
 		}
 		consumer.DeleteMessage(*rawMessage.ReceiptHandle)
 		fmt.Println("Processed message", *rawMessage.MessageId)
+		logger.Info("Processed message", map[string]interface{}{
+			"messageId": *rawMessage.MessageId,
+		})
 	}
 }

@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"log"
-
 	"github.com/silasstoffel/account-service/internal/domain/webhook"
 	"github.com/silasstoffel/account-service/internal/event"
 )
@@ -10,7 +8,7 @@ import (
 func (ref *WebHookSubscriptionUseCaseParams) ChangSubscriptionStatusUseCase(id string, active bool) error {
 	subscription, err := ref.WebhookSubscriptionRepository.FindById(id)
 	if err != nil {
-		log.Println("Error when finding subscription", err)
+		ref.Logger.Error("[change-subscription-status-usecase] Error when finding subscription", err, nil)
 		return err
 	}
 	eventType := map[bool]string{
@@ -25,7 +23,7 @@ func (ref *WebHookSubscriptionUseCaseParams) ChangSubscriptionStatusUseCase(id s
 	}
 	subs, err := ref.WebhookSubscriptionRepository.Update(id, toUpdate)
 	if err != nil {
-		log.Println("Error when updating subscription", err)
+		ref.Logger.Error("[change-subscription-status-usecase] Error when updating subscription", err, nil)
 		return err
 	}
 

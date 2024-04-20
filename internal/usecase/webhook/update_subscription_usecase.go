@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"log"
-
 	"github.com/silasstoffel/account-service/internal/domain/webhook"
 	"github.com/silasstoffel/account-service/internal/event"
 )
@@ -10,13 +8,13 @@ import (
 func (ref *WebHookSubscriptionUseCaseParams) UpdateSubscriptionUseCase(id string, input webhook.UpdateSubscriptionInput) (*webhook.Subscription, error) {
 	subscription, err := ref.WebhookSubscriptionRepository.FindById(id)
 	if err != nil {
-		log.Println("Error when updating subscription", err)
+		ref.Logger.Error("[update-subscription-usecase] Error when finding subscription", err, nil)
 		return nil, err
 	}
 
 	subs, err := ref.WebhookSubscriptionRepository.Update(id, buildInput(subscription, input))
 	if err != nil {
-		log.Println("Error when updating subscription", err)
+		ref.Logger.Error("[update-subscription-usecase] Error when updating subscription", err, nil)
 		return nil, err
 	}
 	subs.CreatedAt = subscription.CreatedAt

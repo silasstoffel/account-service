@@ -16,16 +16,13 @@ import (
 	"github.com/silasstoffel/account-service/internal/utility"
 )
 
-var accountRepository *database.AccountRepository
-var messagingProducer *messaging.MessagingProducer
-var accountPermissionRepository *database.AccountPermissionRepository
 var accountUseCase *usecase.AccountUseCase
 
 func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.DB) {
 	logger := logger.NewLogger(config)
-	accountRepository = database.NewAccountRepository(db, logger)
-	accountPermissionRepository = database.NewAccountPermissionRepository(db, logger)
-	messagingProducer = messaging.NewDefaultMessagingProducerFromConfig(config)
+	accountRepository := database.NewAccountRepository(db, logger)
+	accountPermissionRepository := database.NewAccountPermissionRepository(db, logger)
+	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config, logger)
 	accountUseCase = usecase.NewAccountUseCase(accountRepository, accountPermissionRepository, messagingProducer, logger)
 
 	permissions := map[string]string{
@@ -45,11 +42,7 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 
 func listAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		listAccount := usecase.ListAccount{
-			AccountRepository:           accountRepository,
-			AccountPermissionRepository: accountPermissionRepository,
-		}
-		accounts, err := listAccount.ListAccountUseCase(
+		accounts, err := accountUseCase.ListAccountUseCase(
 			domain.ListAccountInput{
 				Page:  utility.StrToInt(c.Query("page"), 1),
 				Limit: utility.StrToInt(c.Query("limit"), 10),
@@ -69,11 +62,7 @@ func listAccount() gin.HandlerFunc {
 func getAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		findAccount := usecase.FindAccount{
-			AccountRepository:           accountRepository,
-			AccountPermissionRepository: accountPermissionRepository,
-		}
-		account, err := findAccount.FindAccountUseCase(id)
+		account, err := accountUseCase.FindAccountUseCase(id)
 
 		if err != nil {
 			detail := err.(*exception.Exception)

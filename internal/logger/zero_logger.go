@@ -25,6 +25,13 @@ func NewLogger(config *configs.Config) *Logger {
 	}
 }
 
+func NewLoggerWithService(config *configs.Config, serviceName string) *Logger {
+	return &Logger{
+		Env:     config.Env,
+		Service: serviceName,
+	}
+}
+
 func (ref *Logger) Info(message string, data map[string]interface{}) {
 	log.Info().Fields(ref.appendDefaultInput(data)).Msg(message)
 }

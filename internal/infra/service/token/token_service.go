@@ -1,7 +1,6 @@
 package token
 
 import (
-	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -32,7 +31,6 @@ func (ref *TokenService) CreateToken(data string) (*auth.CreateTokenOutput, erro
 
 	signed, err := token.SignedString([]byte(ref.Secret))
 	if err != nil {
-		log.Fatalln("Error when sign token", err)
 		return nil, err
 	}
 
@@ -44,14 +42,11 @@ func (ref *TokenService) CreateToken(data string) (*auth.CreateTokenOutput, erro
 }
 
 func (ref *TokenService) VerifyToken(token string) (*auth.VerifyTokenOutput, error) {
-	lp := "[token-service][verify-token]"
 	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		return []byte(ref.Secret), nil
 	})
 
 	if err != nil {
-		message := "Error when parse token"
-		log.Println(lp, message, err.Error())
 		return nil, exception.New(exception.ErrorParseToken, &err)
 	}
 
@@ -61,8 +56,6 @@ func (ref *TokenService) VerifyToken(token string) (*auth.VerifyTokenOutput, err
 
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
-		message := "Error when convert token"
-		log.Println(lp, message)
 		return nil, exception.New(exception.ErrorConvertToken, &err)
 	}
 
