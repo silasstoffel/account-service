@@ -32,11 +32,13 @@ func GetAccountHandler(router *gin.RouterGroup, config *configs.Config, db *sql.
 		"GET|/v1/accounts/:id": "account-service:get-account,account-service:*",
 	}
 	authorizer := middleware.NewAuthorizerMiddleware(permissions)
+	var createAccountSchema *usecase.CreateAccountInput
+	createAccountValidator := middleware.NewBodyValidatorMiddleware(createAccountSchema)
 
 	group := router.Group("/accounts")
 	group.GET("/", authorizer.AuthorizerMiddleware, listAccount())
 	group.GET("/:id", authorizer.AuthorizerMiddleware, getAccount())
-	group.POST("/", authorizer.AuthorizerMiddleware, createAccount())
+	group.POST("/", authorizer.AuthorizerMiddleware, createAccountValidator.BodyValidatorMiddleware, createAccount())
 	group.PUT("/:id", authorizer.AuthorizerMiddleware, updateAccount())
 }
 

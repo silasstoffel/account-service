@@ -9,11 +9,11 @@ import (
 )
 
 type CreateAccountInput struct {
-	Name        string
-	LastName    string
-	Email       string
-	Phone       string
-	Password    string
+	Name        string `validate:"required,min=3,max=20"`
+	LastName    string `validate:"required"`
+	Email       string `validate:"required,email"`
+	Phone       string `validate:"required"`
+	Password    string `validate:"required,min=6"`
 	Permissions []string
 }
 

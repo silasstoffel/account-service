@@ -2,9 +2,9 @@ package webhook
 
 type CreateSubscriptionInput struct {
 	Id         string `json:"id"`
-	EventType  string `json:"eventType"`
-	Url        string `json:"url"`
-	ExternalId string `json:"externalId,omitempty"`
+	EventType  string `json:"eventType" validate:"required"`
+	Url        string `json:"url" validate:"required"`
+	ExternalId string `json:"externalId,omitempty" validate:"required"`
 }
 
 type UpdateSubscriptionInput struct {

@@ -37,8 +37,11 @@ func GetWebHookSubscriptionHandler(router *gin.RouterGroup, config *configs.Conf
 	}
 	authorizer := middleware.NewAuthorizerMiddleware(permissions)
 
+	var createSubscriptionSchema *webhook.CreateSubscriptionInput
+	schema := middleware.NewBodyValidatorMiddleware(createSubscriptionSchema)
+
 	group := router.Group("/webhooks/subscriptions")
-	group.POST("/", authorizer.AuthorizerMiddleware, createWebHookSubscription())
+	group.POST("/", authorizer.AuthorizerMiddleware, schema.BodyValidatorMiddleware, createWebHookSubscription())
 	group.PUT("/:id", authorizer.AuthorizerMiddleware, updateWebHookSubscription())
 	group.GET("/", authorizer.AuthorizerMiddleware, listWebHookSubscriptions())
 	group.GET("/:id", authorizer.AuthorizerMiddleware, findWebHookSubscription())
