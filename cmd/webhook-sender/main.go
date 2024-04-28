@@ -85,8 +85,7 @@ func main() {
 		delete := true
 		stats, err := notify(message, ttl)
 		if err != nil {
-			detail := err.(*exception.Exception)
-			if detail.Code == exception.WebhookTransactionNotificationTimeout {
+			if err.Error() == exception.WebhookTransactionNotificationTimeout {
 				delete = false
 			}
 		}
@@ -104,12 +103,19 @@ func main() {
 }
 
 func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
+	loggerDetail := map[string]interface{}{
+		"url":            message.Subscription.Url,
+		"messageId":      message.MessageId,
+		"eventType":      message.EventType,
+		"eventId":        message.EventId,
+		"subscriptionId": message.SubscriptionId,
+	}
 	message.SendAt = time.Now().UTC()
 	stats := notifyStats{startedAt: message.SendAt, statusCode: 0}
 	payload, err := json.Marshal(message)
 	if err != nil {
 		stats.finishedAt = time.Now().UTC()
-		log.Error("Error marshalling message on notify webhook", err, nil)
+		log.Error("Error marshalling message on notify webhook", err, loggerDetail)
 		return stats, err
 	}
 
@@ -120,7 +126,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 	)
 	if err != nil {
 		stats.finishedAt = time.Now().UTC()
-		log.Error("Error creating request to notify webhook", err, nil)
+		log.Error("Error creating request to notify webhook", err, loggerDetail)
 		return stats, err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -132,6 +138,7 @@ func notify(message messageDetail, ttl time.Duration) (notifyStats, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		stats.finishedAt = time.Now().UTC()
+		log.Error("Error when sending request", err, loggerDetail)
 		isTimeout := strings.Contains(err.Error(), "Client.Timeout")
 		if isTimeout {
 			message := "Webhook notification timeout"
