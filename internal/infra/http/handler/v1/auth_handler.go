@@ -20,7 +20,7 @@ var authUseCaseParams *usecase.AuthParams
 
 func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
 	logger := logger.NewLogger(config)
-	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config)
+	messagingProducer := messaging.NewDefaultMessagingProducerFromConfig(config, logger)
 	tokenManagerService := &token.TokenService{
 		Secret:           config.AuthSecret,
 		EmittedBy:        config.App.AppName,
@@ -40,7 +40,9 @@ func GetAuthHandler(router *gin.Engine, config *configs.Config, db *sql.DB) {
 		accountPermissionRepository,
 		logger,
 	)
-	router.POST("/auth", auth())
+	var body *usecase.AuthInput
+	schema := middleware.NewBodyValidatorMiddleware(body)
+	router.POST("/auth", schema.BodyValidatorMiddleware, auth())
 	router.GET("/auth/verify", verifyToken.VerifyTokenMiddleware, verify(accountRepository, accountPermissionRepository))
 }
 

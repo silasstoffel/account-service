@@ -7,7 +7,11 @@ type Response struct {
 
 func InvalidInputFormat() *Response {
 	return &Response{
-		Code:    "INVALID_INPUT_FORMAT",
+		Code:    "input.invalid_format",
 		Message: "Invalid input format",
 	}
+}
+
+func ValidationFailure(m string) *Response {
+	return &Response{Code: "validation.failure", Message: m}
 }
