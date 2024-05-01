@@ -46,6 +46,16 @@ go run cmd/webhook-schedule/main.go
 go run cmd/webhook-sender/main.go
 ```
 
+## Tests
+
+```shell
+# Run all test
+go test -coverprofile=coverage.out ./...
+
+# Coverage
+go tool cover -html=coverage.out
+```
+
 ## Helpful Tips
 
 - To view API endpoints and payloads, access this [directory](./docs/api-endpoints/) *.
