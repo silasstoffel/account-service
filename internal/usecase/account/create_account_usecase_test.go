@@ -1,10 +1,11 @@
-package usecase
+package usecase_test
 
 import (
 	"testing"
 
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/logger"
+	usecase "github.com/silasstoffel/account-service/internal/usecase/account"
 )
 
 type AccountRepositoryMock struct{}
@@ -80,8 +81,8 @@ func TestCreateAccountUseCase(t *testing.T) {
 		},
 	}
 
-	usecase := NewAccountUseCase(repositoryMock, AccountPermissionRepositoryMock, &messagingMock, &logger)
-	result, err := usecase.CreateAccountUseCase(CreateAccountInput{
+	accountUsecase := usecase.NewAccountUseCase(repositoryMock, AccountPermissionRepositoryMock, &messagingMock, &logger)
+	result, err := accountUsecase.CreateAccountUseCase(usecase.CreateAccountInput{
 		Name:        createdAccountMock.Name,
 		LastName:    createdAccountMock.LastName,
 		Email:       createdAccountMock.Email,
