@@ -16,6 +16,8 @@ require (
 	golang.org/x/crypto v0.21.0
 )
 
+require gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.3 // indirect
