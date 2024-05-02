@@ -13,6 +13,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/rs/zerolog v1.32.0
+	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.21.0
 )
 

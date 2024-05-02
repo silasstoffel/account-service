@@ -19,5 +19,5 @@ func (ref *AccountUseCase) FindAccountUseCase(id string) (accountDomain.Account,
 	p, _ := ref.AccountPermissionRepository.FindByAccountId(account.Id)
 	account.Permissions = p
 
-	return account, nil
+	return account.ToDomain(), nil
 }

@@ -32,3 +32,8 @@ awslocal sns set-subscription-attributes \
     --attribute-name FilterPolicy \
     --attribute-value '{"EventType":[{"anything-but": ["event.created"]}]}'
 
+
+
+#mockgen
+mockgen -source=internal/domain/account/account_repository_interface.go -destination=internal/test/mock/account_repository_mock.go -package=mock
+mockgen -source=internal/domain/account/account_permission_repository_interface.go -destination=internal/test/mock/account_permission_repository_mock.go -package=mock
