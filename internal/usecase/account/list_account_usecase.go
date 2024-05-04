@@ -21,6 +21,7 @@ func (ref *AccountUseCase) ListAccountUseCase(input domain.ListAccountInput) ([]
 			return nil, err
 		}
 		accounts[key].Permissions = p
+		accounts[key] = accounts[key].ToDomain()
 	}
 
 	return accounts, nil

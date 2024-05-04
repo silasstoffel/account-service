@@ -44,7 +44,7 @@ func (ref *AccountUseCase) checkUpdateInput(input UpdateAccountInput, accountId 
 		}
 
 		if !account.IsEmpty() && account.Id != accountId {
-			return exception.New(exception.AccountEmailAlreadyExists, &err)
+			return exception.New(exception.AccountPhoneAlreadyExists, &err)
 		}
 	}
 

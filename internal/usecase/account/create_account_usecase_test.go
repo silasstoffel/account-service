@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"testing"
+	"time"
 
 	domain "github.com/silasstoffel/account-service/internal/domain/account"
 	"github.com/silasstoffel/account-service/internal/logger"
@@ -76,7 +77,7 @@ func TestCreateAccountUseCase(t *testing.T) {
 				PermissionId: "1",
 				Scope:        "admin",
 				Active:       true,
-				CreatedAt:    "2021-01-01",
+				CreatedAt:    time.Now(),
 			},
 		},
 	}
