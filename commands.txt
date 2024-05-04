@@ -35,5 +35,8 @@ awslocal sns set-subscription-attributes \
 
 
 #mockgen
+export PATH=$PATH:$(go env GOPATH)/bin
+
 mockgen -source=internal/domain/account/account_repository_interface.go -destination=internal/test/mock/account_repository_mock.go -package=mock
 mockgen -source=internal/domain/account/account_permission_repository_interface.go -destination=internal/test/mock/account_permission_repository_mock.go -package=mock
+mockgen -source=internal/event/event.go -destination=internal/test/mock/event_mock.go -package=mock
