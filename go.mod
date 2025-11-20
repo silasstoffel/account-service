@@ -1,7 +1,6 @@
 module github.com/silasstoffel/account-service
 
-go 1.21.5
-toolchain go1.23.7
+go 1.24.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.26.0
@@ -15,7 +14,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/rs/zerolog v1.32.0
 	go.uber.org/mock v0.4.0
-	golang.org/x/crypto v0.35.0
+	golang.org/x/crypto v0.45.0
 )
 
 require gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
@@ -54,9 +53,9 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/net v0.36.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
